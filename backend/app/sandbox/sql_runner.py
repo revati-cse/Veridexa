@@ -23,10 +23,15 @@ MAX_ROWS_RETURNED = 1000
 
 # Anything beyond a single read-only SELECT (or WITH ... SELECT) is rejected
 # outright — candidates never get write, schema, or pragma access.
+#
+# PRAGMA uses \w* rather than \b after it (unlike the others) because SQLite
+# also exposes pragmas as callable table-valued functions —
+# `SELECT * FROM pragma_table_info('t')` — which contains no standalone
+# "PRAGMA" word and would otherwise slip past a plain \bPRAGMA\b match.
 _FORBIDDEN_KEYWORDS = re.compile(
     r"\b("
     r"INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|TRUNCATE|"
-    r"ATTACH|DETACH|PRAGMA|VACUUM|REINDEX|EXEC|EXECUTE"
+    r"ATTACH|DETACH|PRAGMA\w*|VACUUM|REINDEX|EXEC|EXECUTE|LOAD_EXTENSION"
     r")\b",
     re.IGNORECASE,
 )

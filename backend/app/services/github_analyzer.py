@@ -13,13 +13,14 @@ contrast, falls back to a fixture (BLUEPRINT.md Section W), since the repo
 data itself was already fetched successfully.
 """
 
+import asyncio
 import json
 import logging
 from pathlib import Path
 
 from app.ai.claude_client import AIServiceUnavailable, call_structured
 from app.ai.prompts.github_analysis_prompt import SYSTEM_PROMPT, build_user_prompt
-from app.github.client import GithubAccessError, GithubClient, parse_repo_url
+from app.github.client import GithubAccessError, GithubClient, RepoRef, parse_repo_url
 from app.github.dependencies import extract_dependencies
 from app.github.selection import select_files_for_analysis
 from app.schemas.common import ClaimLevel, EvidenceStrength
@@ -38,6 +39,12 @@ _FIXTURE_PATH = Path(__file__).resolve().parent.parent / "fixtures" / "demo_gith
 MAX_FILE_LINES = 200
 MAX_FILE_CHARS = 6000
 MAX_TOTAL_CONTENT_CHARS = 18_000
+# Each GitHub call is individually capped (REQUEST_TIMEOUT_SECONDS in
+# app/github/client.py), but the fetch phase makes up to ~18 sequential
+# calls (metadata + languages + tree + selected files) with no aggregate
+# bound — this caps the whole phase so one slow/degraded GitHub response
+# can't tie up the request far longer than a candidate would ever wait.
+OVERALL_FETCH_TIMEOUT_SECONDS = 30.0
 
 
 def _truncate_file(content: str) -> str:
@@ -100,19 +107,12 @@ def _build_claims_vs_evidence(
     return rows
 
 
-async def analyze_repository(
-    repository_url: str,
-    claimed_skills: list[ClaimedSkill],
-    required_skills: list[str],
-) -> tuple[list[LanguageDetected], list[SkillEvidenceItem], list[ClaimVsEvidenceItem], bool]:
-    """Returns (languages_detected, skills, claims_vs_evidence, used_ai_fallback).
-
-    Raises GithubAccessError if the repository itself can't be read — that
-    is not caught here, callers (the router) turn it into a 4xx response.
-    """
-    ref = parse_repo_url(repository_url)
-    claimed_skill_names = [c.skill for c in claimed_skills]
-
+async def _fetch_repository_content(
+    ref: RepoRef, claimed_skill_names: list[str], required_skills: list[str]
+) -> tuple[dict[str, int], dict[str, str], list[dict]]:
+    """Everything that touches the network. Returns
+    (languages_raw, contents, dependency_files) — factored out so
+    analyze_repository can wrap the whole phase in a single overall timeout."""
     async with GithubClient() as client:
         metadata = await client.get_metadata(ref)
         languages_raw = await client.get_languages(ref)
@@ -134,6 +134,32 @@ async def analyze_repository(
                 continue  # drop remaining lowest-ranked files once the token cap is hit
             contents[entry["path"]] = truncated
             total_chars += len(truncated)
+
+    return languages_raw, contents, dependency_files
+
+
+async def analyze_repository(
+    repository_url: str,
+    claimed_skills: list[ClaimedSkill],
+    required_skills: list[str],
+) -> tuple[list[LanguageDetected], list[SkillEvidenceItem], list[ClaimVsEvidenceItem], bool]:
+    """Returns (languages_detected, skills, claims_vs_evidence, used_ai_fallback).
+
+    Raises GithubAccessError if the repository itself can't be read — that
+    is not caught here, callers (the router) turn it into a 4xx response.
+    """
+    ref = parse_repo_url(repository_url)
+    claimed_skill_names = [c.skill for c in claimed_skills]
+
+    try:
+        languages_raw, contents, dependency_files = await asyncio.wait_for(
+            _fetch_repository_content(ref, claimed_skill_names, required_skills),
+            timeout=OVERALL_FETCH_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError as exc:
+        raise GithubAccessError(
+            f"Fetching {ref.owner}/{ref.repo} took too long (over {OVERALL_FETCH_TIMEOUT_SECONDS:.0f}s) — try again."
+        ) from exc
 
     dependency_names = extract_dependencies(contents)
     source_only_contents = {path: text for path, text in contents.items() if path not in {e["path"] for e in dependency_files}}

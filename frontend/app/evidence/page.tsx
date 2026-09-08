@@ -52,11 +52,18 @@ export default function EvidencePage() {
   async function handleSubmit() {
     setSubmitting(true);
     setSubmitError(null);
-    try {
-      const userId = getCandidateId();
-      await api.saveClaims({ user_id: userId, claims });
+    const userId = getCandidateId();
 
-      if (repoUrl.trim()) {
+    try {
+      await api.saveClaims({ user_id: userId, claims });
+    } catch (err) {
+      setSubmitError(err instanceof ApiError ? `Failed to save claims: ${err.message}` : "Failed to save claims.");
+      setSubmitting(false);
+      return;
+    }
+
+    if (repoUrl.trim()) {
+      try {
         const res = await api.analyzeGithub({
           user_id: userId,
           repository_url: repoUrl.trim(),
@@ -64,12 +71,15 @@ export default function EvidencePage() {
           required_skills: [],
         });
         setGithubEvidence(res);
+      } catch (err) {
+        // Claims already saved above — a repo analysis failure shouldn't
+        // read as if nothing happened, and it never blocks moving on.
+        const detail = err instanceof ApiError ? err.message : "Repository analysis failed.";
+        setSubmitError(`${detail} Your claimed skills were saved — you can continue without repository evidence.`);
       }
-    } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : "Failed to save evidence.");
-    } finally {
-      setSubmitting(false);
     }
+
+    setSubmitting(false);
   }
 
   return (

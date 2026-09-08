@@ -52,19 +52,27 @@ export default function EvaluationPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <h3 className="font-semibold text-green-700">Strengths</h3>
-          <ul className="mt-1 list-inside list-disc text-sm text-slate-700">
-            {evaluation.strengths.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
+          {evaluation.strengths.length > 0 ? (
+            <ul className="mt-1 list-inside list-disc text-sm text-slate-700">
+              {evaluation.strengths.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-slate-400">None identified yet.</p>
+          )}
         </div>
         <div>
           <h3 className="font-semibold text-amber-700">Weaknesses</h3>
-          <ul className="mt-1 list-inside list-disc text-sm text-slate-700">
-            {evaluation.weaknesses.map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
+          {evaluation.weaknesses.length > 0 ? (
+            <ul className="mt-1 list-inside list-disc text-sm text-slate-700">
+              {evaluation.weaknesses.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-sm text-slate-400">None identified yet.</p>
+          )}
         </div>
       </div>
 

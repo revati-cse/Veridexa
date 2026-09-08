@@ -13,7 +13,7 @@ from app.services.github_analyzer import analyze_repository
 class FakeGithubClient:
     """Stands in for app.github.client.GithubClient in tests — no network."""
 
-    def __init__(self, metadata=None, languages=None, tree=None, contents=None, fail_with=None):
+    def __init__(self, metadata=None, languages=None, tree=None, contents=None, fail_with=None, metadata_delay=0):
         self._metadata = metadata or {"default_branch": "main"}
         self._languages = languages or {"Python": 900, "SQL": 100}
         self._tree = tree or [
@@ -27,6 +27,7 @@ class FakeGithubClient:
             "requirements.txt": "pandas==2.2.0\n",
         }
         self._fail_with = fail_with
+        self._metadata_delay = metadata_delay
 
     async def __aenter__(self):
         if self._fail_with:
@@ -37,6 +38,8 @@ class FakeGithubClient:
         return False
 
     async def get_metadata(self, ref):
+        if self._metadata_delay:
+            await asyncio.sleep(self._metadata_delay)
         return self._metadata
 
     async def get_languages(self, ref):
@@ -126,4 +129,23 @@ def test_analyze_repository_propagates_access_errors_without_fabricating_evidenc
         new=_fake_client_factory(fail_with=GithubAccessError("repo not found")),
     ):
         with pytest.raises(GithubAccessError):
+            asyncio.run(analyze_repository("https://github.com/example/repo", [], []))
+
+
+def test_analyze_repository_enforces_an_overall_fetch_timeout():
+    # Per-request timeouts exist inside GithubClient itself, but nothing
+    # previously bounded the whole fetch phase (metadata + languages + tree
+    # + up to ~18 file fetches). A slow/degraded response anywhere in that
+    # chain should still fail fast with a clear GithubAccessError rather
+    # than hanging the request far longer than a candidate would wait.
+    import app.services.github_analyzer as github_analyzer_module
+
+    with (
+        patch.object(github_analyzer_module, "OVERALL_FETCH_TIMEOUT_SECONDS", 0.05),
+        patch(
+            "app.services.github_analyzer.GithubClient",
+            new=_fake_client_factory(metadata_delay=1.0),
+        ),
+    ):
+        with pytest.raises(GithubAccessError, match="took too long"):
             asyncio.run(analyze_repository("https://github.com/example/repo", [], []))

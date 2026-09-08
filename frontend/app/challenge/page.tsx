@@ -9,6 +9,7 @@ import { getCandidateId } from "@/lib/candidateId";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { DatasetTables } from "@/components/challenge/DatasetTables";
 
 export default function ChallengePage() {
   const router = useRouter();
@@ -115,11 +116,7 @@ export default function ChallengePage() {
         {challenge.instructions}
       </p>
 
-      {challenge.dataset != null && (
-        <pre className="overflow-x-auto rounded-md bg-slate-900 p-3 text-xs text-slate-100">
-          {JSON.stringify(challenge.dataset, null, 2)}
-        </pre>
-      )}
+      {challenge.dataset != null && <DatasetTables dataset={challenge.dataset} />}
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-slate-700">SQL / Code</label>

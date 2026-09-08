@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.rate_limit import RateLimitMiddleware
 from app.routers import (
     candidates,
     challenges,
@@ -16,6 +17,10 @@ from app.routers import (
 
 app = FastAPI(title="Veridexa AI API", version="0.1.0")
 
+# Middleware order: the LAST one added is outermost. RateLimitMiddleware is
+# added first so CORSMiddleware wraps it — otherwise a 429 rejection would
+# skip CORS headers and the frontend couldn't even read the rejection.
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,

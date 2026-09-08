@@ -30,19 +30,25 @@ export default function SkillsPage() {
     <div className="flex flex-col gap-4">
       <h2 className="text-2xl font-semibold">{job.title}</h2>
       <p className="text-slate-600">Required skills extracted from the job description.</p>
-      <ul className="flex flex-col gap-2">
-        {job.required_skills.map((rs) => (
-          <li
-            key={rs.skill}
-            className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-2.5"
-          >
-            <span className="font-medium">{rs.skill}</span>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${IMPORTANCE_STYLE[rs.importance]}`}>
-              {rs.importance}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {job.required_skills.length > 0 ? (
+        <ul className="flex flex-col gap-2">
+          {job.required_skills.map((rs) => (
+            <li
+              key={rs.skill}
+              className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-2.5"
+            >
+              <span className="font-medium">{rs.skill}</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${IMPORTANCE_STYLE[rs.importance]}`}>
+                {rs.importance}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-400">
+          No specific technical skills were extracted — try pasting a more detailed job description.
+        </p>
+      )}
       {job.tools.length > 0 && (
         <p className="text-sm text-slate-500">Tools: {job.tools.join(", ")}</p>
       )}

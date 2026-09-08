@@ -9,6 +9,7 @@ import base64
 import logging
 import re
 from dataclasses import dataclass
+from urllib.parse import quote
 
 import httpx
 
@@ -78,8 +79,12 @@ class GithubClient:
         return resp.json()
 
     async def get_tree(self, ref: RepoRef, branch: str) -> list[dict]:
+        # Percent-encode: branch names can legitimately contain "/" (e.g.
+        # "release/v1"), and this is a raw f-string URL, not auto-encoded by
+        # httpx — an unescaped segment could otherwise be misinterpreted as
+        # extra path structure.
         resp = await self._client.get(
-            f"/repos/{ref.owner}/{ref.repo}/git/trees/{branch}", params={"recursive": "1"}
+            f"/repos/{ref.owner}/{ref.repo}/git/trees/{quote(branch, safe='')}", params={"recursive": "1"}
         )
         self._raise_for_status(resp, ref)
         data = resp.json()
@@ -91,7 +96,11 @@ class GithubClient:
         """Returns decoded text content, or None if the file is missing, not
         base64-encoded (e.g. a GitHub-side redirect for a huge file), or not
         valid UTF-8 text."""
-        resp = await self._client.get(f"/repos/{ref.owner}/{ref.repo}/contents/{path}")
+        # Percent-encode each path segment but keep "/" as the directory
+        # separator GitHub expects — paths come from GitHub's own tree
+        # listing and can contain spaces or other characters that need
+        # escaping in a raw f-string URL.
+        resp = await self._client.get(f"/repos/{ref.owner}/{ref.repo}/contents/{quote(path, safe='/')}")
         if resp.status_code == 404:
             return None
         self._raise_for_status(resp, ref)

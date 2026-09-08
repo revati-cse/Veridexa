@@ -62,6 +62,34 @@ def test_write_statements_are_rejected():
         assert result.rejected_reason is not None, query
 
 
+def test_pragma_table_valued_functions_are_rejected():
+    # SQLite exposes pragmas as callable table-valued functions too —
+    # `SELECT * FROM pragma_table_info(...)` contains no standalone "PRAGMA"
+    # word, so a naive \bPRAGMA\b denylist would let it through even though
+    # it's real pragma access. Confirmed via direct sqlite3 experimentation
+    # before fixing: pragma_table_info('t') and pragma_database_list both
+    # execute successfully against a bare in-memory connection.
+    for query in [
+        "SELECT * FROM pragma_table_info('customers')",
+        "SELECT * FROM pragma_database_list",
+        "select * from PRAGMA_compile_options",
+    ]:
+        result = run_sql(query, DATASET)
+        assert result.success is False, query
+        assert result.rejected_reason is not None, query
+
+
+def test_load_extension_is_rejected_by_denylist_and_also_blocked_by_sqlite_itself():
+    # Belt-and-suspenders: Python's sqlite3 module blocks load_extension by
+    # default (no enable_load_extension() call is ever made here), but the
+    # denylist should catch it too rather than relying solely on that
+    # runtime default, which is a config detail, not a guarantee.
+    result = run_sql("SELECT load_extension('whatever')", DATASET)
+
+    assert result.success is False
+    assert result.rejected_reason is not None
+
+
 def test_multiple_statements_are_rejected():
     result = run_sql("SELECT * FROM customers; DROP TABLE customers;", DATASET)
 
@@ -79,6 +107,30 @@ def test_trailing_semicolon_alone_is_still_allowed():
 def test_invalid_dataset_identifier_is_rejected():
     bad_dataset = {"tables": [{"name": "bad; drop", "columns": ["id"], "rows": []}]}
     result = run_sql("SELECT * FROM customers", bad_dataset)
+
+    assert result.success is False
+    assert "Invalid challenge dataset" in result.error
+
+
+def test_oversized_dataset_is_rejected_not_seeded():
+    # Legitimate datasets are 5-15 rows (per the challenge-generation
+    # prompts) — a raw API caller sending something wildly larger (bypassing
+    # the UI, which never lets a candidate edit the dataset directly) should
+    # be rejected as a bad dataset, not silently seeded into memory.
+    huge_dataset = {
+        "tables": [{"name": "customers", "columns": ["id"], "rows": [[i] for i in range(100_000)]}]
+    }
+    result = run_sql("SELECT * FROM customers", huge_dataset)
+
+    assert result.success is False
+    assert "Invalid challenge dataset" in result.error
+
+
+def test_too_many_tables_is_rejected():
+    huge_dataset = {
+        "tables": [{"name": f"t{i}", "columns": ["id"], "rows": []} for i in range(1000)]
+    }
+    result = run_sql("SELECT 1", huge_dataset)
 
     assert result.success is False
     assert "Invalid challenge dataset" in result.error
