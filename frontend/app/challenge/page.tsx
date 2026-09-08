@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useSessionStore } from "@/lib/store";
@@ -10,6 +11,14 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { DatasetTables } from "@/components/challenge/DatasetTables";
+
+// monaco-editor touches `window` at module scope, which breaks Next.js's
+// static prerendering even inside a "use client" component — ssr: false
+// keeps it out of the server render entirely, only loading in the browser.
+const MonacoSqlEditor = dynamic(
+  () => import("@/components/challenge/MonacoSqlEditor").then((mod) => mod.MonacoSqlEditor),
+  { ssr: false, loading: () => <LoadingState label="Loading code editor..." /> }
+);
 
 export default function ChallengePage() {
   const router = useRouter();
@@ -120,14 +129,7 @@ export default function ChallengePage() {
 
       <div className="flex flex-col gap-2">
         <label className="text-sm font-medium text-slate-700">SQL / Code</label>
-        {/* Monaco editor swaps in for this textarea in Phase 7 — plain textarea proves the wiring for now. */}
-        <textarea
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          rows={8}
-          className="rounded-md border border-slate-300 p-3 font-mono text-sm"
-          placeholder="SELECT ..."
-        />
+        <MonacoSqlEditor value={code} onChange={setCode} />
       </div>
 
       <div className="flex flex-col gap-2">
