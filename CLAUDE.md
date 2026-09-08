@@ -198,6 +198,45 @@ don't re-derive it from the key later (see the comment in
 `compute_timeline`, and `test_skill_outside_the_taxonomy_keeps_its_
 original_casing` in `tests/test_timeline_engine.py`).
 
+## Deployment config verification (item 34)
+
+Actually deploying to live Render/Railway/Vercel/Supabase accounts needs
+credentials this environment doesn't have — that part of BLUEPRINT.md
+checklist item 34 stays undone. What *is* verified, in this environment,
+against the real config files rather than by inspection alone:
+
+- **No drift across the four sources of truth.** `.env.example`,
+  `render.yaml`'s `envVars`, and `Settings` in `backend/app/config.py`
+  declare the exact same six backend env var names
+  (`ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `SUPABASE_URL`,
+  `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `ALLOWED_ORIGINS`) — checked
+  programmatically (set diff), not by eye.
+- **Boots clean on a Render/Railway-shaped `$PORT` with zero secrets set.**
+  Ran the exact `render.yaml`/`Procfile` start command
+  (`uvicorn app.main:app --host 0.0.0.0 --port $PORT`) with `PORT=10000`
+  and every credential unset — `/health` returned 200, matching the
+  "nothing 500s from a missing key" claim in the README.
+- **CORS enforcement, exercised for real, not just read from the code.**
+  With `ALLOWED_ORIGINS` set to a Vercel-shaped prod domain, an `OPTIONS`
+  preflight from that exact origin got a 200 with
+  `access-control-allow-origin` echoed back; a preflight from an origin
+  *not* on the list got a 400 with no `access-control-allow-origin`
+  header — a browser would block it. Confirms the README's "CORS is
+  locked to exactly what's listed there" is accurate, not aspirational.
+- **Production-shaped frontend build.** `npm run build` with
+  `NEXT_PUBLIC_API_BASE_URL` set to a `*.onrender.com`-shaped URL succeeded
+  (all 8 routes), and the built JS chunks actually contain that URL with no
+  `localhost:8000` fallback baked in — proving the Vercel env var wiring
+  works, not just that the build doesn't crash.
+- **Secrets hygiene.** `.env`, `.env.local`, and `*.env` are all in the
+  root `.gitignore` — confirmed no local credential file has ever been
+  tracked.
+
+None of this required a live Render/Vercel/Supabase account — it's all
+reproducible locally with `PORT`/`ALLOWED_ORIGINS`/
+`NEXT_PUBLIC_API_BASE_URL` env vars set to production-shaped fake values,
+which is exactly what the commands above did.
+
 ## Demo rehearsal status
 
 BLUEPRINT.md checklist item 35 ("full rehearsal of `docs/demo_script.md`
