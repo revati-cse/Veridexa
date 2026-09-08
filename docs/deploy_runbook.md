@@ -121,11 +121,25 @@ URLs, not localhost:
    cd backend
    SMOKE_TEST_BASE_URL=https://<your-render-domain> python scripts/smoke_test.py
    ```
-   Expect `SMOKE TEST PASSED`. If `ANTHROPIC_API_KEY`/`DATABASE_URL` are
-   both configured for real, the readiness numbers should match the
-   "with GitHub evidence" / live-Claude path rather than the fixture
-   numbers in `docs/demo_script.md` — that's expected once it's live,
-   not a discrepancy to chase.
+   Expect `SMOKE TEST PASSED`. Once `ANTHROPIC_API_KEY` is configured for
+   real, the printed readiness numbers won't match either row in
+   `docs/demo_script.md` — not the fixture numbers (63.3%→70.5%, no
+   longer using the fixture path) and not the "with GitHub evidence"
+   numbers either (70.4%→76.5%, since those came from a hand-curated
+   fixture crafted for this JD's skills, not a real repo). The script's
+   `DEMO_REPO_URL` is hardcoded to `github.com/octocat/Hello-World` — an
+   essentially empty repo unrelated to SQL/Python/Statistics — so once
+   `ANTHROPIC_API_KEY` is set (which is what drives real, non-fixture
+   analysis of whatever content got fetched; `GITHUB_TOKEN` only affects
+   the fetch's rate limit, not this), real evidence from it will look
+   weak across the board and pull readiness numbers *down*, not toward
+   the fixture's 70.4%/76.5%. That's expected, not a discrepancy to chase: at this
+   stage you're checking that the loop completes and readiness improves
+   after mutation, not that it hits a specific number. `docs/demo_script.md`'s
+   exact numbers are only ever reproducible on the fixture-fallback path
+   (no `ANTHROPIC_API_KEY`/`GITHUB_TOKEN` set) — that's a local check, per
+   the demo script's own "Reproducing these exact numbers" section, and
+   isn't expected to hold once this live deploy has real credentials.
 2. **Frontend smoke-click** — open the Vercel URL, paste the demo JD from
    `docs/demo_script.md`, and walk Screens 1–7 by hand once. Confirm no
    CORS errors in the browser console (would show as a fetch failure on
