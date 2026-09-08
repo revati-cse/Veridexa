@@ -10,6 +10,49 @@ body {
   @apply bg-slate-50 text-slate-900 antialiased;
 }
 
+/* A display serif for headings only — Tailwind's default sans everywhere
+ * (body + h1 + button + label, all the same weight/face) is the single
+ * biggest "this was scaffolded, not designed" tell. One deliberate font
+ * pairing, applied globally here rather than per-component, fixes every
+ * screen at once. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+}
+
 ::selection {
-  @apply bg-indigo-100 text-indigo-900;
+  @apply bg-ember-100 text-ember-900;
+}
+
+:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Subtle print-grain texture for hero/CTA surfaces — breaks up a flat
+ * gradient fill so it reads as a printed/designed surface rather than a
+ * default CSS gradient. Opacity is intentionally low; it should be felt,
+ * not seen. */
+.bg-noise {
+  position: relative;
+  isolation: isolate;
+}
+
+.bg-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: theme("backgroundImage.grain");
+  mix-blend-mode: overlay;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-noise > * {
+  position: relative;
+  z-index: 1;
 }
