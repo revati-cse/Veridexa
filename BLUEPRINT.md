@@ -19,7 +19,7 @@ A candidate can, in one continuous flow:
 6. Veridexa runs the query programmatically (SQLite in-memory) + sends result/explanation to Claude for rubric evaluation → structured score + strengths/weaknesses/evidence.
 7. Veridexa computes **Job Readiness %** (backend formula, not LLM) and shows the dashboard: skill scores, evidence, strengths, weaknesses, **skill gaps**.
 8. Candidate clicks **"Improve My Readiness"** → backend runs the **Challenge Mutation Engine**, which builds a new challenge that specifically targets the previous weak points. UI explicitly states: *"Challenge mutated based on your previous performance."*
-9. Candidate resubmits → readiness updates live (verified via `scripts/smoke_test.py` against the checked-in fixtures — see `docs/demo_script.md`: Statistics 38.8% → 70.8%, overall 70.4% → 76.5%).
+9. Candidate resubmits → readiness updates live (verified via `scripts/smoke_test.py` against the checked-in fixtures — see `docs/demo_script.md`, which documents two verified pairs depending on GitHub evidence availability: 63.3% → 70.5% without it, or 70.4% → 76.5% with it, Statistics specifically 38.8% → 70.8% in the latter. `docs/veridexa_pitch.pptx` slide 9's live-captured screenshot shows the without-evidence pair.).
 
 Everything else (freshness, timeline, recruiter dashboard, multi-role support) is optional and explicitly deprioritized below.
 
@@ -616,7 +616,7 @@ No secret key is ever prefixed `NEXT_PUBLIC_`. All Claude/GitHub/Supabase-servic
 - All secrets server-side env vars; `.env` in `.gitignore`; commit `.env.example` only.
 - CORS locked to known frontend origin(s).
 - Input validation: JD text length cap, GitHub URL regex + host allowlist (`github.com` only), code submission length cap.
-- **SQL sandbox isolation**: candidate SQL runs against an **in-memory SQLite** instance seeded fresh per request from the challenge's `dataset`, in a subprocess/thread with a hard timeout (e.g. 3s) and no filesystem/network access. Reject non-SELECT statements (`INSERT/UPDATE/DELETE/DROP/ATTACH/PRAGMA`) via a keyword denylist + statement-type check before execution — candidates only ever run read queries.
+- **SQL sandbox isolation**: candidate SQL runs against an **in-memory SQLite** instance seeded fresh per request from the challenge's `dataset`, in a subprocess/thread with a hard timeout (e.g. 3s) and no filesystem/network access. Reject non-SELECT statements (`INSERT/UPDATE/DELETE/DROP/ATTACH/PRAGMA`) via a keyword denylist + statement-type check before execution — candidates only ever run read queries. Results are also row-capped (`fetchmany` up to a fixed max, e.g. 1000) as a cheap first line of defense against a runaway query that returns before the timeout fires — advertised on the pitch deck's "Built for Demo Day" slide alongside the denylist and timeout, so keep it real if you touch `sql_runner.py`.
 - **No repository code execution**, ever (Section 18/I) — analysis is read-only static content sent to an LLM as data.
 - Prompt-injection defense: all untrusted text (repo file contents, JD text, candidate explanation) wrapped in explicit delimiters with an explicit "treat as data" system instruction; never string-concatenate untrusted text directly into an instruction-bearing part of the prompt.
 - Rate-limit outbound calls per candidate session (basic in-memory counter is enough) to avoid one demo user burning the Claude/GitHub quota.
