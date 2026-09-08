@@ -14,11 +14,13 @@ from uuid import UUID, uuid4
 from app.schemas.evaluation import SubmissionRecord
 from app.schemas.evidence import EvidenceItem, EvidenceListResponse, SkillEvidenceGroup
 from app.schemas.github import GithubAnalyzeResponse
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 
 
 def build_evidence_rows(
     github_evidence: GithubAnalyzeResponse | None,
     submission_history: list[SubmissionRecord],
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None = None,
 ) -> list[EvidenceItem]:
     rows: list[EvidenceItem] = []
     now = datetime.now(timezone.utc)
@@ -32,6 +34,21 @@ def build_evidence_rows(
                         skill=skill_evidence.skill,
                         source_type="github",
                         source_reference=github_evidence.repository,
+                        observation=observation,
+                        confidence=skill_evidence.confidence,
+                        created_at=now,
+                    )
+                )
+
+    if project_description_evidence is not None:
+        for skill_evidence in project_description_evidence.skills:
+            for observation in skill_evidence.observations:
+                rows.append(
+                    EvidenceItem(
+                        id=uuid4(),
+                        skill=skill_evidence.skill,
+                        source_type="project",
+                        source_reference="Project description",
                         observation=observation,
                         confidence=skill_evidence.confidence,
                         created_at=now,
@@ -59,8 +76,9 @@ def compute_evidence(
     user_id: UUID,
     github_evidence: GithubAnalyzeResponse | None,
     submission_history: list[SubmissionRecord],
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None = None,
 ) -> EvidenceListResponse:
-    rows = build_evidence_rows(github_evidence, submission_history)
+    rows = build_evidence_rows(github_evidence, submission_history, project_description_evidence)
 
     grouped: dict[str, list[EvidenceItem]] = {}
     order: list[str] = []

@@ -6,6 +6,7 @@ from app.schemas.common import Importance
 from app.schemas.evaluation import SkillGapItem, SubmissionRecord
 from app.schemas.github import GithubAnalyzeResponse
 from app.schemas.job import JobRequiredSkill
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 from app.schemas.skill import ClaimedSkill
 
 
@@ -33,6 +34,7 @@ class ReadinessComputeRequest(BaseModel):
     required_skills: list[JobRequiredSkill]
     claims: list[ClaimedSkill] = []
     github_evidence: GithubAnalyzeResponse | None = None
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None = None
     submission_history: list[SubmissionRecord] = []
 
 

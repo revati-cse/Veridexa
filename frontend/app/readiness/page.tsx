@@ -12,11 +12,12 @@ import {
   Flame,
   ShieldAlert,
   Info,
+  FileSearch,
 } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useSessionStore } from "@/lib/store";
 import { getCandidateId } from "@/lib/candidateId";
-import type { SkillTimeline } from "@/lib/types";
+import type { SkillEvidenceGroup, SkillTimeline } from "@/lib/types";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -32,6 +33,7 @@ export default function ReadinessPage() {
   const job = useSessionStore((s) => s.job);
   const claims = useSessionStore((s) => s.claims);
   const githubEvidence = useSessionStore((s) => s.githubEvidence);
+  const projectDescriptionEvidence = useSessionStore((s) => s.projectDescriptionEvidence);
   const submissionHistory = useSessionStore((s) => s.submissionHistory);
   const readiness = useSessionStore((s) => s.readiness);
   const setReadiness = useSessionStore((s) => s.setReadiness);
@@ -44,12 +46,14 @@ export default function ReadinessPage() {
   const [mutating, setMutating] = useState(false);
   const [mutateError, setMutateError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<SkillTimeline[]>([]);
+  const [evidenceTrail, setEvidenceTrail] = useState<SkillEvidenceGroup[]>([]);
 
   useEffect(() => {
     if (jobId && job) loadReadiness();
     if (submissionHistory.length > 0) loadTimeline();
+    if (githubEvidence || projectDescriptionEvidence || submissionHistory.length > 0) loadEvidenceTrail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId, job, submissionHistory]);
+  }, [jobId, job, submissionHistory, githubEvidence, projectDescriptionEvidence]);
 
   async function loadReadiness() {
     if (!jobId || !job) return;
@@ -64,6 +68,7 @@ export default function ReadinessPage() {
           required_skills: job.required_skills,
           claims,
           github_evidence: githubEvidence,
+          project_description_evidence: projectDescriptionEvidence,
           submission_history: submissionHistory,
         })
       );
@@ -81,6 +86,20 @@ export default function ReadinessPage() {
     } catch {
       // Skill Evolution is a supplementary view — a failure here shouldn't
       // block the primary readiness screen, so it just stays empty.
+    }
+  }
+
+  async function loadEvidenceTrail() {
+    try {
+      const res = await api.computeEvidence({
+        user_id: getCandidateId(),
+        github_evidence: githubEvidence,
+        project_description_evidence: projectDescriptionEvidence,
+        submission_history: submissionHistory,
+      });
+      setEvidenceTrail(res.skills);
+    } catch {
+      // Supplementary view — a failure here shouldn't block readiness itself.
     }
   }
 
@@ -159,6 +178,35 @@ export default function ReadinessPage() {
           Readiness = Σ(skill score × job importance) / Σ(job importance) — computed in the backend, not by the AI.
         </p>
       </Card>
+
+      {evidenceTrail.length > 0 && (
+        <Card className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            <FileSearch size={15} className="text-indigo-500" />
+            Evidence Trail
+          </h2>
+          <p className="text-xs text-slate-500">
+            Every skill score above traces back to one of these — never a bare number with nothing behind it.
+          </p>
+          <div className="flex flex-col gap-3">
+            {evidenceTrail.map((group) => (
+              <div key={group.skill}>
+                <p className="text-sm font-medium text-slate-800">{group.skill}</p>
+                <ul className="mt-1 flex flex-col gap-1">
+                  {group.evidence.map((item) => (
+                    <li key={item.id} className="flex items-start gap-2 text-xs text-slate-500">
+                      <Badge tone="neutral" className="mt-0.5 shrink-0 capitalize">
+                        {item.source_type}
+                      </Badge>
+                      <span>{item.observation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card className="flex flex-col gap-2">

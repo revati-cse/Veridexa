@@ -9,6 +9,7 @@ from app.schemas.evaluation import (
     SubmissionRecord,
 )
 from app.schemas.github import ClaimVsEvidenceItem, GithubAnalyzeResponse, LanguageDetected, SkillEvidenceItem
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 from app.services.evidence_engine import compute_evidence
 
 USER_ID = uuid4()
@@ -27,6 +28,17 @@ GITHUB_EVIDENCE = GithubAnalyzeResponse(
     claims_vs_evidence=[
         ClaimVsEvidenceItem(skill="Python", claim="advanced", repository_evidence="strong", assessment="x"),
     ],
+)
+
+PROJECT_DESCRIPTION_EVIDENCE = ProjectDescriptionAnalyzeResponse(
+    source_id=uuid4(),
+    skills=[
+        SkillEvidenceItem(
+            skill="Power BI", evidence_strength="moderate", confidence=0.5,
+            observations=["Built a monthly revenue dashboard by customer"],
+        ),
+    ],
+    claims_vs_evidence=[],
 )
 
 
@@ -93,6 +105,30 @@ def test_compute_evidence_combines_and_groups_both_sources_by_skill():
     assert len(python_group.evidence) == 3  # 2 from github + 1 from the submission
     sources = {item.source_type for item in python_group.evidence}
     assert sources == {"github", "submission"}
+
+
+def test_compute_evidence_builds_one_row_per_project_description_observation():
+    response = compute_evidence(
+        USER_ID, github_evidence=None, submission_history=[],
+        project_description_evidence=PROJECT_DESCRIPTION_EVIDENCE,
+    )
+
+    powerbi_group = next(g for g in response.skills if g.skill == "Power BI")
+    assert len(powerbi_group.evidence) == 1
+    assert powerbi_group.evidence[0].source_type == "project"
+    assert powerbi_group.evidence[0].source_reference == "Project description"
+    assert powerbi_group.evidence[0].confidence == 0.5
+
+
+def test_compute_evidence_combines_github_and_project_description_sources():
+    response = compute_evidence(
+        USER_ID, github_evidence=GITHUB_EVIDENCE, submission_history=[],
+        project_description_evidence=PROJECT_DESCRIPTION_EVIDENCE,
+    )
+
+    skills_present = {g.skill for g in response.skills}
+    assert "Python" in skills_present  # from GitHub
+    assert "Power BI" in skills_present  # from the project description
 
 
 def test_compute_evidence_never_produces_a_row_from_a_claim():

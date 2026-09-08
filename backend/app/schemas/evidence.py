@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.schemas.common import EvidenceSourceType
 from app.schemas.evaluation import SubmissionRecord
 from app.schemas.github import GithubAnalyzeResponse
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 
 
 class EvidenceItem(BaseModel):
@@ -36,6 +37,7 @@ class EvidenceComputeRequest(BaseModel):
 
     user_id: UUID
     github_evidence: GithubAnalyzeResponse | None = None
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None = None
     submission_history: list[SubmissionRecord] = []
 
 

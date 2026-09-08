@@ -2,10 +2,16 @@
 
 Pure backend arithmetic, no AI call: the LLM is never involved in computing
 a skill score or the final readiness percentage. Each skill's score blends
-whichever of (latest challenge evidence, GitHub evidence, claim alignment)
+whichever of (latest challenge evidence, project evidence, claim alignment)
 is actually available, normalizing the weights over just the components
-present — so a skill with only strong GitHub evidence isn't unfairly capped
+present — so a skill with only strong project evidence isn't unfairly capped
 by the 60% weight reserved for challenge evidence it hasn't earned yet.
+
+"Project evidence" covers both a GitHub repository and a free-text project
+description (project_description_analyzer.py) — they're alternative ways of
+providing the same tier of evidence (BLUEPRINT.md Section 2's "documentation
+is a claim, code is stronger evidence" applies to both equally), not two
+separate weighted components. A skill present in both is averaged.
 """
 
 from uuid import UUID
@@ -13,6 +19,7 @@ from uuid import UUID
 from app.schemas.evaluation import SubmissionRecord
 from app.schemas.github import GithubAnalyzeResponse
 from app.schemas.job import JobRequiredSkill
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 from app.schemas.readiness import ReadinessResponse, SkillScoreBreakdown
 from app.schemas.skill import ClaimedSkill
 from app.services.skill_engine import normalize_skill
@@ -20,10 +27,10 @@ from app.services.skill_gap_engine import compute_skill_gaps
 
 _IMPORTANCE_WEIGHT = {"high": 3, "medium": 2, "low": 1}
 
-_GITHUB_EVIDENCE_SCORE = {"strong": 90.0, "moderate": 65.0, "weak": 35.0, "none": 0.0}
+_EVIDENCE_STRENGTH_SCORE = {"strong": 90.0, "moderate": 65.0, "weak": 35.0, "none": 0.0}
 
 _CHALLENGE_WEIGHT = 0.6
-_GITHUB_WEIGHT = 0.3
+_PROJECT_EVIDENCE_WEIGHT = 0.3
 _CLAIM_WEIGHT = 0.1
 
 _STRENGTH_THRESHOLD = 80.0
@@ -50,13 +57,22 @@ def _latest_challenge_scores(submission_history: list[SubmissionRecord]) -> dict
     return scores
 
 
-def _github_scores(github_evidence: GithubAnalyzeResponse | None) -> dict[str, float]:
-    if github_evidence is None:
-        return {}
-    return {
-        normalize_skill(item.skill).lower(): _GITHUB_EVIDENCE_SCORE[item.evidence_strength]
-        for item in github_evidence.skills
-    }
+def _project_evidence_scores(
+    github_evidence: GithubAnalyzeResponse | None,
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None,
+) -> dict[str, float]:
+    totals: dict[str, float] = {}
+    counts: dict[str, int] = {}
+
+    for source in (github_evidence, project_description_evidence):
+        if source is None:
+            continue
+        for item in source.skills:
+            key = normalize_skill(item.skill).lower()
+            totals[key] = totals.get(key, 0.0) + _EVIDENCE_STRENGTH_SCORE[item.evidence_strength]
+            counts[key] = counts.get(key, 0) + 1
+
+    return {key: totals[key] / counts[key] for key in totals}
 
 
 def _claim_alignment_bonus(has_claim: bool, corroborating_score: float | None) -> float | None:
@@ -74,19 +90,19 @@ def _compute_skill_score(
     skill: str,
     claims_by_skill: dict[str, ClaimedSkill],
     challenge_scores: dict[str, float],
-    github_scores: dict[str, float],
+    project_scores: dict[str, float],
 ) -> float:
     key = skill.lower()
     challenge_score = challenge_scores.get(key)
-    github_score = github_scores.get(key)
-    corroborating = challenge_score if challenge_score is not None else github_score
+    project_score = project_scores.get(key)
+    corroborating = challenge_score if challenge_score is not None else project_score
     claim_bonus = _claim_alignment_bonus(key in claims_by_skill, corroborating)
 
     components: list[tuple[float, float]] = []
     if challenge_score is not None:
         components.append((challenge_score, _CHALLENGE_WEIGHT))
-    if github_score is not None:
-        components.append((github_score, _GITHUB_WEIGHT))
+    if project_score is not None:
+        components.append((project_score, _PROJECT_EVIDENCE_WEIGHT))
     if claim_bonus is not None:
         components.append((claim_bonus, _CLAIM_WEIGHT))
 
@@ -105,16 +121,17 @@ def compute_readiness(
     claims: list[ClaimedSkill],
     github_evidence: GithubAnalyzeResponse | None,
     submission_history: list[SubmissionRecord],
+    project_description_evidence: ProjectDescriptionAnalyzeResponse | None = None,
 ) -> ReadinessResponse:
     claims_by_skill = {normalize_skill(c.skill).lower(): c for c in claims}
     challenge_scores = _latest_challenge_scores(submission_history)
-    github_scores = _github_scores(github_evidence)
+    project_scores = _project_evidence_scores(github_evidence, project_description_evidence)
 
     breakdown: list[SkillScoreBreakdown] = []
     for requirement in required_skills:
         skill = normalize_skill(requirement.skill)
         weight = _IMPORTANCE_WEIGHT[requirement.importance]
-        score = _compute_skill_score(skill, claims_by_skill, challenge_scores, github_scores)
+        score = _compute_skill_score(skill, claims_by_skill, challenge_scores, project_scores)
         breakdown.append(
             SkillScoreBreakdown(
                 skill=skill,

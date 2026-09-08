@@ -9,6 +9,7 @@ from app.schemas.evaluation import (
 )
 from app.schemas.github import ClaimVsEvidenceItem, GithubAnalyzeResponse, LanguageDetected, SkillEvidenceItem
 from app.schemas.job import JobRequiredSkill
+from app.schemas.project import ProjectDescriptionAnalyzeResponse
 from app.schemas.skill import ClaimedSkill
 from app.services.readiness_engine import compute_readiness
 
@@ -44,6 +45,14 @@ def _github(skill: str, strength: str) -> GithubAnalyzeResponse:
     )
 
 
+def _project_description(skill: str, strength: str) -> ProjectDescriptionAnalyzeResponse:
+    return ProjectDescriptionAnalyzeResponse(
+        source_id=uuid4(),
+        skills=[SkillEvidenceItem(skill=skill, evidence_strength=strength, confidence=0.5, observations=["x"])],
+        claims_vs_evidence=[],
+    )
+
+
 def test_skill_with_no_evidence_and_no_claim_scores_zero():
     response = compute_readiness(
         USER_ID, JOB_ID, "Data Analyst",
@@ -76,6 +85,32 @@ def test_skill_with_only_github_evidence_normalizes_to_full_weight():
     )
 
     assert response.skill_breakdown[0].score == 90.0  # strong -> 90, normalized to 100% weight
+
+
+def test_skill_with_only_project_description_evidence_normalizes_to_full_weight():
+    response = compute_readiness(
+        USER_ID, JOB_ID, "Data Analyst",
+        required_skills=[JobRequiredSkill(skill="Power BI", importance="high")],
+        claims=[], github_evidence=None, submission_history=[],
+        project_description_evidence=_project_description("Power BI", "moderate"),
+    )
+
+    assert response.skill_breakdown[0].score == 65.0  # moderate -> 65, normalized to 100% weight
+
+
+def test_github_and_project_description_evidence_for_same_skill_are_averaged():
+    response = compute_readiness(
+        USER_ID, JOB_ID, "Data Analyst",
+        required_skills=[JobRequiredSkill(skill="Python", importance="high")],
+        claims=[],
+        github_evidence=_github("Python", "strong"),  # 90
+        submission_history=[],
+        project_description_evidence=_project_description("Python", "weak"),  # 35
+    )
+
+    # (90 + 35) / 2 = 62.5, still a single "project evidence" component (0.3
+    # weight) normalized to 100% since it's the only component present.
+    assert response.skill_breakdown[0].score == 62.5
 
 
 def test_skill_with_challenge_and_github_and_claim_blends_all_three():

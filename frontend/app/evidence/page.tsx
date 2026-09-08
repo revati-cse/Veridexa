@@ -1,27 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Github, MessageSquareText, ShieldCheck, ArrowDown, Folder } from "lucide-react";
+import { ArrowRight, Github, MessageSquareText, ArrowDown, Folder, FileText } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useSessionStore } from "@/lib/store";
 import { getCandidateId } from "@/lib/candidateId";
-import type { ClaimLevel, EvidenceStrength, SkillTaxonomyItem } from "@/lib/types";
+import type { ClaimLevel, SkillTaxonomyItem } from "@/lib/types";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { Card } from "@/components/shared/Card";
-import { Badge, type BadgeTone } from "@/components/shared/Badge";
 import { Button, LinkButton } from "@/components/shared/Button";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ProgressBar } from "@/components/shared/ProgressBar";
+import { EvidenceSourcePanel } from "@/components/evidence/EvidenceSourcePanel";
 
 const CLAIM_LEVELS: ClaimLevel[] = ["beginner", "intermediate", "advanced"];
-
-const STRENGTH_TONE: Record<EvidenceStrength, BadgeTone> = {
-  strong: "success",
-  moderate: "info",
-  weak: "warning",
-  none: "neutral",
-};
+const MIN_DESCRIPTION_LENGTH = 20;
 
 function repoName(url: string): string {
   const parts = url.replace(/\/+$/, "").split("/");
@@ -33,10 +26,13 @@ export default function EvidencePage() {
   const setClaims = useSessionStore((s) => s.setClaims);
   const githubEvidence = useSessionStore((s) => s.githubEvidence);
   const setGithubEvidence = useSessionStore((s) => s.setGithubEvidence);
+  const projectDescriptionEvidence = useSessionStore((s) => s.projectDescriptionEvidence);
+  const setProjectDescriptionEvidence = useSessionStore((s) => s.setProjectDescriptionEvidence);
 
   const [taxonomy, setTaxonomy] = useState<SkillTaxonomyItem[] | null>(null);
   const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
   const [repoUrl, setRepoUrl] = useState("");
+  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -94,6 +90,21 @@ export default function EvidencePage() {
       }
     }
 
+    if (description.trim().length >= MIN_DESCRIPTION_LENGTH) {
+      try {
+        const res = await api.analyzeProjectDescription({
+          user_id: userId,
+          description: description.trim(),
+          claimed_skills: claims,
+          required_skills: [],
+        });
+        setProjectDescriptionEvidence(res);
+      } catch (err) {
+        const detail = err instanceof ApiError ? err.message : "Project description analysis failed.";
+        setSubmitError(`${detail} Your claimed skills were saved — you can continue without this evidence.`);
+      }
+    }
+
     setSubmitting(false);
   }
 
@@ -102,7 +113,7 @@ export default function EvidencePage() {
       <PageHeader
         eyebrow="Step 3 of 6"
         title="Claims are not enough. Evidence matters."
-        subtitle="Tell Veridexa what you believe you know, then let a real GitHub repository back it up. A claim never becomes evidence by itself."
+        subtitle="Tell Veridexa what you believe you know, then let a real project back it up. A claim never becomes evidence by itself."
       />
 
       {/* Mini pipeline */}
@@ -188,9 +199,35 @@ export default function EvidencePage() {
           placeholder="https://github.com/username/repository"
           className="rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
         />
+      </Card>
+
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-100 text-slate-600">
+            <FileText size={16} />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Or describe a project</h2>
+            <p className="text-xs text-slate-500">
+              No repository? Describe something you built — what it did, and specifically how you did it.
+            </p>
+          </div>
+        </div>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g. Built a sales dashboard in Power BI on top of a Python ETL script that cleaned raw CSV exports and loaded them into..."
+          rows={4}
+          className="rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        />
+        <p className="text-xs text-slate-400">
+          {description.trim().length > 0 && description.trim().length < MIN_DESCRIPTION_LENGTH
+            ? `${MIN_DESCRIPTION_LENGTH - description.trim().length} more characters needed`
+            : "Specifics score higher than buzzwords — vague claims stay weak evidence."}
+        </p>
 
         {submitError && <ErrorState message={submitError} onRetry={handleSubmit} />}
-        {submitting && <LoadingState label="Saving claims and analyzing repository..." />}
+        {submitting && <LoadingState label="Saving claims and analyzing evidence..." />}
 
         <Button onClick={handleSubmit} disabled={submitting || claims.length === 0} className="self-start">
           Save Evidence
@@ -198,94 +235,36 @@ export default function EvidencePage() {
       </Card>
 
       {githubEvidence && (
-        <div className="flex flex-col gap-4">
-          <Card className="flex flex-col gap-3 border-indigo-100">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <a
-                href={githubEvidence.repository}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 font-mono text-sm font-medium text-indigo-700 hover:underline"
-              >
-                <Github size={15} />
-                {repoName(githubEvidence.repository)}
-              </a>
-              {githubEvidence.demo_fallback && <Badge tone="neutral">Demo fallback</Badge>}
-            </div>
-            {githubEvidence.languages_detected.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {githubEvidence.languages_detected.map((l) => (
-                  <Badge key={l.language} tone="neutral">
-                    {l.language} · {Math.round(l.confidence * 100)}%
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </Card>
+        <EvidenceSourcePanel
+          header={
+            <a
+              href={githubEvidence.repository}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 font-mono text-sm font-medium text-indigo-700 hover:underline"
+            >
+              <Github size={15} />
+              {repoName(githubEvidence.repository)}
+            </a>
+          }
+          skills={githubEvidence.skills}
+          claimsVsEvidence={githubEvidence.claims_vs_evidence}
+          demoFallback={githubEvidence.demo_fallback}
+        />
+      )}
 
-          {githubEvidence.skills.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <ShieldCheck size={15} className="text-emerald-600" />
-                Skills demonstrated in this repository
-              </h3>
-              {githubEvidence.skills.map((s) => (
-                <Card key={s.skill} padding="sm" className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-900">{s.skill}</span>
-                    <Badge tone={STRENGTH_TONE[s.evidence_strength]}>{s.evidence_strength} evidence</Badge>
-                  </div>
-                  <ProgressBar label="Confidence" value={Math.round(s.confidence * 100)} />
-                  {s.observations.length > 0 && (
-                    <ul className="mt-1 list-inside list-disc text-xs text-slate-500">
-                      {s.observations.map((o) => (
-                        <li key={o}>{o}</li>
-                      ))}
-                    </ul>
-                  )}
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {githubEvidence.claims_vs_evidence.length > 0 && (
-            <Card className="flex flex-col gap-3">
-              <h3 className="text-sm font-semibold text-slate-700">Claim vs. Evidence</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px] border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                      <th className="py-2 font-medium">Skill</th>
-                      <th className="py-2 font-medium">
-                        <span className="inline-flex items-center gap-1">
-                          <MessageSquareText size={11} /> Claim
-                        </span>
-                      </th>
-                      <th className="py-2 font-medium">
-                        <span className="inline-flex items-center gap-1">
-                          <ShieldCheck size={11} /> Evidence
-                        </span>
-                      </th>
-                      <th className="py-2 font-medium">Assessment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {githubEvidence.claims_vs_evidence.map((row) => (
-                      <tr key={row.skill} className="border-b border-slate-100">
-                        <td className="py-2.5 font-medium text-slate-900">{row.skill}</td>
-                        <td className="py-2.5 capitalize text-slate-600">{row.claim ?? "—"}</td>
-                        <td className="py-2.5">
-                          <Badge tone={STRENGTH_TONE[row.repository_evidence]}>{row.repository_evidence}</Badge>
-                        </td>
-                        <td className="py-2.5 text-slate-500">{row.assessment}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          )}
-        </div>
+      {projectDescriptionEvidence && (
+        <EvidenceSourcePanel
+          header={
+            <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <FileText size={15} className="text-slate-500" />
+              Project description
+            </span>
+          }
+          skills={projectDescriptionEvidence.skills}
+          claimsVsEvidence={projectDescriptionEvidence.claims_vs_evidence}
+          demoFallback={projectDescriptionEvidence.demo_fallback}
+        />
       )}
 
       <LinkButton href="/challenge" variant="secondary" icon={<ArrowRight size={16} />} className="flex-row-reverse self-start">

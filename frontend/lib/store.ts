@@ -4,6 +4,7 @@ import type {
   ClaimedSkill,
   GithubAnalyzeResponse,
   ParsedJob,
+  ProjectDescriptionAnalyzeResponse,
   ReadinessResponse,
   SubmissionEvaluationResponse,
   SubmissionRecord,
@@ -26,6 +27,7 @@ interface SessionState {
   job: ParsedJob | null;
   claims: ClaimedSkill[];
   githubEvidence: GithubAnalyzeResponse | null;
+  projectDescriptionEvidence: ProjectDescriptionAnalyzeResponse | null;
   currentChallenge: Challenge | null;
   evaluation: SubmissionEvaluationResponse | null;
   submissionHistory: SubmissionRecord[];
@@ -34,6 +36,7 @@ interface SessionState {
   setJob: (jobId: string, job: ParsedJob) => void;
   setClaims: (claims: ClaimedSkill[]) => void;
   setGithubEvidence: (evidence: GithubAnalyzeResponse | null) => void;
+  setProjectDescriptionEvidence: (evidence: ProjectDescriptionAnalyzeResponse | null) => void;
   setCurrentChallenge: (challenge: Challenge) => void;
   setEvaluation: (evaluation: SubmissionEvaluationResponse) => void;
   addSubmissionRecord: (challenge: Challenge, evaluation: SubmissionEvaluationResponse) => void;
@@ -46,6 +49,7 @@ const initialState = {
   job: null,
   claims: [],
   githubEvidence: null,
+  projectDescriptionEvidence: null,
   currentChallenge: null,
   evaluation: null,
   submissionHistory: [],
@@ -57,6 +61,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   setJob: (jobId, job) => set({ jobId, job }),
   setClaims: (claims) => set({ claims }),
   setGithubEvidence: (githubEvidence) => set({ githubEvidence }),
+  setProjectDescriptionEvidence: (projectDescriptionEvidence) => set({ projectDescriptionEvidence }),
   setCurrentChallenge: (currentChallenge) => set({ currentChallenge }),
   setEvaluation: (evaluation) => set({ evaluation }),
   addSubmissionRecord: (challenge, evaluation) =>

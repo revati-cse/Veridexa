@@ -24,6 +24,7 @@ from app.schemas.github import (
     SkillEvidenceItem,
 )
 from app.schemas.job import JobParseRequest, JobParseResponse, JobRequiredSkill, ParsedJob
+from app.schemas.project import ProjectDescriptionAnalyzeRequest, ProjectDescriptionAnalyzeResponse
 from app.schemas.readiness import ReadinessComputeRequest, ReadinessResponse, SkillScoreBreakdown
 from app.schemas.recruiter import CandidateSummary, RecruiterDashboardResponse
 from app.schemas.skill import ClaimedSkill, ClaimsRequest, SkillTaxonomyItem
@@ -59,6 +60,8 @@ __all__ = [
     "JobParseResponse",
     "JobRequiredSkill",
     "ParsedJob",
+    "ProjectDescriptionAnalyzeRequest",
+    "ProjectDescriptionAnalyzeResponse",
     "ReadinessComputeRequest",
     "ReadinessResponse",
     "SkillScoreBreakdown",

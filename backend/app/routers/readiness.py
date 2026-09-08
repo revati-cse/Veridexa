@@ -19,5 +19,6 @@ async def compute_readiness_endpoint(request: ReadinessComputeRequest) -> Readin
         required_skills=request.required_skills,
         claims=request.claims,
         github_evidence=request.github_evidence,
+        project_description_evidence=request.project_description_evidence,
         submission_history=request.submission_history,
     )

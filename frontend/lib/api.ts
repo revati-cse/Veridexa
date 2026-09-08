@@ -12,6 +12,8 @@ import type {
   GithubAnalyzeResponse,
   JobParseRequest,
   JobParseResponse,
+  ProjectDescriptionAnalyzeRequest,
+  ProjectDescriptionAnalyzeResponse,
   ReadinessComputeRequest,
   ReadinessResponse,
   RecruiterDashboardResponse,
@@ -73,6 +75,12 @@ export const api = {
 
   analyzeGithub: (body: GithubAnalyzeRequest) =>
     request<GithubAnalyzeResponse>("/github/analyze", { method: "POST", body: JSON.stringify(body) }),
+
+  analyzeProjectDescription: (body: ProjectDescriptionAnalyzeRequest) =>
+    request<ProjectDescriptionAnalyzeResponse>("/evidence/analyze-description", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 
   generateChallenge: (body: ChallengeGenerateRequest) =>
     request<ChallengeGenerateResponse>("/challenges/generate", { method: "POST", body: JSON.stringify(body) }),

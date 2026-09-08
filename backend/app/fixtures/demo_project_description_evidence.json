@@ -1,0 +1,38 @@
+{
+  "skills": [
+    {
+      "skill": "Python",
+      "evidence_strength": "moderate",
+      "confidence": 0.55,
+      "observations": [
+        "Description mentions writing a Python script to clean and merge sales data",
+        "No specific libraries, functions, or techniques named beyond 'cleaning'"
+      ]
+    },
+    {
+      "skill": "SQL",
+      "evidence_strength": "weak",
+      "confidence": 0.3,
+      "observations": [
+        "SQL mentioned only as 'queried the database', no specifics on joins, aggregation, or schema"
+      ]
+    },
+    {
+      "skill": "Power BI",
+      "evidence_strength": "moderate",
+      "confidence": 0.5,
+      "observations": [
+        "Describes building a sales dashboard with monthly revenue and top-customer views",
+        "No detail on DAX measures, data modeling, or refresh setup"
+      ]
+    },
+    {
+      "skill": "Statistics",
+      "evidence_strength": "none",
+      "confidence": 0.05,
+      "observations": [
+        "No statistical methods, tests, or modeling mentioned in the description"
+      ]
+    }
+  ]
+}

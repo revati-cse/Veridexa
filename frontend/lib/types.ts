@@ -125,6 +125,27 @@ export interface GithubAnalyzeResponse {
 }
 
 // ---------------------------------------------------------------------------
+// project.py — the evidence path for a candidate with a project but no
+// repository link (see project_description_analyzer.py). Same shape as the
+// GitHub evidence types above, minus repository-specific fields.
+// ---------------------------------------------------------------------------
+
+export interface ProjectDescriptionAnalyzeRequest {
+  user_id: string;
+  description: string;
+  claimed_skills: ClaimedSkill[];
+  required_skills: string[];
+}
+
+export interface ProjectDescriptionAnalyzeResponse {
+  source_id: string;
+  skills: SkillEvidenceItem[];
+  claims_vs_evidence: ClaimVsEvidenceItem[];
+  demo_fallback: boolean;
+  analyzed_at: string;
+}
+
+// ---------------------------------------------------------------------------
 // challenge.py
 // ---------------------------------------------------------------------------
 
@@ -266,6 +287,7 @@ export interface SkillEvidenceGroup {
 export interface EvidenceComputeRequest {
   user_id: string;
   github_evidence: GithubAnalyzeResponse | null;
+  project_description_evidence: ProjectDescriptionAnalyzeResponse | null;
   submission_history: SubmissionRecord[];
 }
 
@@ -296,6 +318,7 @@ export interface ReadinessComputeRequest {
   required_skills: JobRequiredSkill[];
   claims: ClaimedSkill[];
   github_evidence: GithubAnalyzeResponse | null;
+  project_description_evidence: ProjectDescriptionAnalyzeResponse | null;
   submission_history: SubmissionRecord[];
 }
 
