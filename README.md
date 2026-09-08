@@ -46,6 +46,8 @@ psql "$DATABASE_URL" -f supabase/migrations/002_seed_skills.sql
 ## Deployment
 
 Backend → Render or Railway. Frontend → Vercel. Database → Supabase (Postgres).
+For the full step-by-step (including post-deploy verification and
+troubleshooting), see [`docs/deploy_runbook.md`](./docs/deploy_runbook.md).
 
 ### Backend (Render)
 
