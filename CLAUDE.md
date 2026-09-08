@@ -237,6 +237,12 @@ reproducible locally with `PORT`/`ALLOWED_ORIGINS`/
 `NEXT_PUBLIC_API_BASE_URL` env vars set to production-shaped fake values,
 which is exactly what the commands above did.
 
+The actual execution steps this verification unblocks — provisioning
+Supabase, setting real env vars on Render/Vercel, closing the CORS loop,
+and post-deploy checks — are written up in
+[`docs/deploy_runbook.md`](./docs/deploy_runbook.md); whoever has real
+credentials should follow that rather than re-deriving these steps.
+
 ## Demo rehearsal status
 
 BLUEPRINT.md checklist item 35 ("full rehearsal of `docs/demo_script.md`
