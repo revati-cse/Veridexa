@@ -90,21 +90,32 @@ Single FastAPI service, modular routers/services (not microservices — 2 devs, 
 
 ## E. BACKEND ARCHITECTURE
 
+As-built (originally sketched with a single `db.py` and 8 routers; kept
+current here rather than left to silently drift — see CLAUDE.md's own
+"Repo layout" for the short version):
+
 ```
 backend/
   app/
-    main.py                  # FastAPI app, CORS, routers mounted
+    main.py                  # FastAPI app, CORS, rate-limit middleware, routers mounted
     config.py                # env var loading (pydantic-settings)
-    db.py                    # Supabase/Postgres client (asyncpg or supabase-py)
+    rate_limit.py            # per-session in-memory outbound-call limiter (Section T)
+    db/                      # best-effort Postgres write-through (asyncpg) — no-ops without
+      pool.py, users.py, jobs.py, skills.py, challenges.py,   # DATABASE_URL; see CLAUDE.md's
+      submissions.py, evidence.py, github.py, claims.py       # "Best-effort DB writes"
     routers/
       jobs.py                # POST /jobs/parse
       skills.py              # GET /skills/taxonomy
+      candidates.py          # POST /candidates/claims
       github.py              # POST /github/analyze
-      challenges.py          # POST /challenges/generate, POST /challenges/mutate
+      challenges.py          # POST /challenges/generate, POST /challenges/mutate, GET /challenges/{id}/history
       submissions.py         # POST /submissions
-      evaluations.py         # (returned inline from submissions, or GET /evaluations/{id})
-      readiness.py           # GET /readiness/{candidate_id}/{job_id}
-      evidence.py            # GET /evidence/{candidate_id}
+      evaluations.py         # GET /evaluations/{evaluation_id}
+      readiness.py           # POST /readiness/compute
+      evidence.py            # POST /evidence/compute
+      freshness.py           # POST /freshness/compute (P2)
+      recruiter.py           # GET /recruiter/jobs/{job_id}/dashboard (P3)
+      timeline.py            # POST /timeline/compute (P3)
     services/
       job_parser.py
       skill_engine.py
@@ -116,6 +127,8 @@ backend/
       skill_gap_engine.py
       challenge_mutation_engine.py
       freshness_engine.py    # optional (P2) — implemented; informational only, does not affect readiness_score
+      recruiter_dashboard.py # P3 — the one service that requires a database, see CLAUDE.md
+      timeline_engine.py     # P3
     ai/
       claude_client.py       # single wrapper: call(), retry, JSON-mode parsing
       prompts/
@@ -124,19 +137,28 @@ backend/
         challenge_generation_prompt.py
         evaluation_prompt.py
         mutation_prompt.py
+    github/                  # GitHub REST client (Section I) — fetch/tree/content, separate
+      client.py, dependencies.py, filters.py, selection.py     # from github_analyzer.py's orchestration
     schemas/
       job.py, skill.py, challenge.py, submission.py, evaluation.py,
-      evidence.py, github.py, readiness.py
+      evidence.py, github.py, readiness.py, common.py, freshness.py,
+      recruiter.py, sandbox.py, timeline.py
     sandbox/
       sql_runner.py          # in-memory SQLite execution of candidate SQL
     fixtures/
       demo_job.json, demo_challenge.json, demo_evaluation.json,
-      demo_github_evidence.json, demo_mutation.json   # Section 19 fallback
+      demo_evaluation_mutated.json, demo_github_evidence.json,
+      demo_mutation.json     # Section W fallback
   requirements.txt
   .env.example
 ```
 
-Every `services/*.py` function signature: `def run(input: PydanticModel) -> PydanticModel`. Pure, testable, no FastAPI objects inside. Routers just validate + call service + persist to Supabase + return.
+Every `services/*.py` function is pure and testable — descriptively named
+(`parse_job`, `compute_readiness`, `evaluate_submission`, ...) with typed
+parameters and a typed return, no FastAPI objects inside — rather than the
+literal `def run(input: PydanticModel) -> PydanticModel` originally
+sketched here. Routers just validate + call service + best-effort persist
+(`app.db.safe_write(...)`, see CLAUDE.md) + return.
 
 ---
 
