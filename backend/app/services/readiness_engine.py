@@ -16,6 +16,7 @@ from app.schemas.job import JobRequiredSkill
 from app.schemas.readiness import ReadinessResponse, SkillScoreBreakdown
 from app.schemas.skill import ClaimedSkill
 from app.services.skill_engine import normalize_skill
+from app.services.skill_gap_engine import compute_skill_gaps
 
 _IMPORTANCE_WEIGHT = {"high": 3, "medium": 2, "low": 1}
 
@@ -131,11 +132,7 @@ def compute_readiness(
     strengths = [row.skill for row in breakdown if row.score >= _STRENGTH_THRESHOLD]
     weaknesses = [row.skill for row in breakdown if row.score < _WEAKNESS_THRESHOLD]
 
-    # skill_gap_engine (next task) replaces this with proper sorting/dedup
-    # per Section O; for now, surface the most recent submission's own
-    # skill_gaps as-is rather than leaving the field empty when real data
-    # already exists.
-    skill_gaps = submission_history[-1].evaluation.skill_gaps if submission_history else []
+    skill_gaps = compute_skill_gaps(breakdown, submission_history)
 
     return ReadinessResponse(
         user_id=user_id,

@@ -156,10 +156,15 @@ export interface ChallengeGenerateResponse {
   demo_fallback: boolean;
 }
 
+/** No DB persistence yet — the frontend already holds the full previous
+ * Challenge + its evaluation (as a SubmissionRecord) from the screens it
+ * already passed through, sent directly rather than by id. */
 export interface ChallengeMutateRequest {
-  previous_challenge_id: string;
-  evaluation_id: string;
   user_id: string;
+  job_id: string;
+  job_title: string;
+  required_skills: string[];
+  previous_attempt: SubmissionRecord;
 }
 
 export interface ChallengeMutateResponse {

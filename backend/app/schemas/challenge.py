@@ -33,6 +33,15 @@ class ChallengeAIOutput(BaseModel):
     expected_output: str
 
 
+class MutatedChallengeAIOutput(ChallengeAIOutput):
+    """Same as ChallengeAIOutput, plus the human-readable reason this
+    specific mutation was chosen — shown verbatim in the UI's mutation
+    banner (Section 8). Difficulty is still backend-assigned (Section P's
+    adapt_difficulty), never part of what Claude returns here."""
+
+    mutation_reason: str
+
+
 class Challenge(BaseModel):
     """Structured output of challenge_generator.py / challenge_mutation_engine.py.
 
@@ -59,12 +68,6 @@ class Challenge(BaseModel):
 class ChallengeGenerateResponse(BaseModel):
     challenge: Challenge
     demo_fallback: bool = False
-
-
-class ChallengeMutateRequest(BaseModel):
-    previous_challenge_id: UUID
-    evaluation_id: UUID
-    user_id: UUID
 
 
 class ChallengeMutateResponse(BaseModel):

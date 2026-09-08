@@ -3,10 +3,10 @@ from app.schemas.challenge import (
     ChallengeGenerateRequest,
     ChallengeGenerateResponse,
     ChallengeHistoryResponse,
-    ChallengeMutateRequest,
     ChallengeMutateResponse,
 )
 from app.schemas.evaluation import (
+    ChallengeMutateRequest,
     EvaluationResult,
     EvidenceObservation,
     SkillGapItem,

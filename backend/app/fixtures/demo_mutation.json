@@ -1,0 +1,29 @@
+{
+  "title": "Is the Revenue Increase Real, or Just Noise?",
+  "role": "Junior Data Analyst",
+  "scenario": "Leadership is celebrating a month-over-month revenue increase, but the sample of orders is small. Before it goes into the board deck, they want to know whether the increase is statistically meaningful or could plausibly be random variation.",
+  "instructions": "Using the two months of order amounts provided, determine whether the increase is statistically significant. State your method, your conclusion, and any assumptions you made.",
+  "required_skills": ["Statistics", "SQL"],
+  "dataset": {
+    "tables": [
+      {
+        "name": "monthly_orders",
+        "columns": ["id", "month", "amount"],
+        "rows": [
+          [1, "2026-01", 120],
+          [2, "2026-01", 95],
+          [3, "2026-01", 110],
+          [4, "2026-01", 130],
+          [5, "2026-01", 105],
+          [6, "2026-02", 140],
+          [7, "2026-02", 125],
+          [8, "2026-02", 150],
+          [9, "2026-02", 115],
+          [10, "2026-02", 135]
+        ]
+      }
+    ]
+  },
+  "expected_output": "A clear statement of whether the month-over-month increase is statistically significant, with the reasoning or method used to reach that conclusion.",
+  "mutation_reason": "Targeted because your previous submission didn't address whether the reported revenue change was statistically meaningful — this challenge specifically tests hypothesis testing and significance reasoning."
+}

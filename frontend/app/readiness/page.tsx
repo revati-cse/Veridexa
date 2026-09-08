@@ -57,14 +57,16 @@ export default function ReadinessPage() {
   }
 
   async function handleImprove() {
-    if (!currentChallenge || !evaluation) return;
+    if (!currentChallenge || !evaluation || !jobId || !job) return;
     setMutating(true);
     setMutateError(null);
     try {
       const res = await api.mutateChallenge({
-        previous_challenge_id: currentChallenge.id,
-        evaluation_id: evaluation.evaluation_id,
         user_id: getCandidateId(),
+        job_id: jobId,
+        job_title: job.title,
+        required_skills: job.required_skills.map((rs) => rs.skill),
+        previous_attempt: { challenge: currentChallenge, evaluation },
       });
       setCurrentChallenge(res.challenge);
       router.push("/challenge");

@@ -90,3 +90,18 @@ class SubmissionRecord(BaseModel):
 
     challenge: Challenge
     evaluation: SubmissionEvaluationResponse
+
+
+class ChallengeMutateRequest(BaseModel):
+    """No DB persistence yet — the frontend already holds the full previous
+    Challenge + its evaluation (as a SubmissionRecord) from the screens it
+    already passed through, so it's sent directly rather than by id. Lives
+    here rather than in schemas/challenge.py because it needs SubmissionRecord,
+    and challenge.py must stay import-safe from evaluation.py (which already
+    imports Challenge from challenge.py) to avoid a circular import."""
+
+    user_id: UUID
+    job_id: UUID
+    job_title: str
+    required_skills: list[str]
+    previous_attempt: SubmissionRecord
