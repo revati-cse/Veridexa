@@ -93,7 +93,7 @@ export default function LandingPage() {
         />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-12 lg:flex-row lg:items-center lg:gap-8">
-          <div className="flex flex-1 flex-col gap-6">
+          <div className="flex flex-col gap-6 lg:flex-1">
             <Logo size="md" />
 
             <div className="flex flex-col gap-4">
@@ -125,7 +125,7 @@ export default function LandingPage() {
 
           {/* Product preview — a real composition of the same components the
               app uses on the Readiness screen, not a stock illustration. */}
-          <div className="flex-1 lg:max-w-sm">
+          <div className="lg:max-w-sm lg:flex-1">
             <Card padding="lg" className="rotate-1 border-white/10 shadow-soft-lg transition-transform hover:rotate-0">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">Preview</p>

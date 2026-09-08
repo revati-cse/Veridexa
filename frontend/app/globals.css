@@ -41,6 +41,13 @@ body {
   isolation: isolate;
 }
 
+/* No z-index/position rules needed on children: the pseudo-element is
+ * first in paint order among the section's positioned children, so later
+ * siblings already paint above it. An earlier version forced `position:
+ * relative` on every direct child to "guarantee" this — which instead
+ * broke the decorative blur-blob divs that rely on `position: absolute`
+ * for their own layout, dropping them into normal flow and pushing all
+ * hero content down by their full height. Don't reintroduce that rule. */
 .bg-noise::before {
   content: "";
   position: absolute;
@@ -50,9 +57,4 @@ body {
   opacity: 0.9;
   pointer-events: none;
   z-index: 0;
-}
-
-.bg-noise > * {
-  position: relative;
-  z-index: 1;
 }
