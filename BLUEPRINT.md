@@ -547,15 +547,26 @@ lib/
 
 ## R. FOLDER STRUCTURE (MONOREPO ROOT)
 
+As-built (`BLUEPRINT.md` lives at repo root, not under `docs/`; migrations
+and `docs/` both grew beyond the original single-file sketch):
+
 ```
 Veridexa/
-  frontend/           # Next.js app (Section Q)
-  backend/             # FastAPI app (Section E)
+  frontend/                    # Next.js app (Section Q)
+  backend/                     # FastAPI app (Section E)
+    Procfile                   # Railway alternative to render.yaml
   supabase/
-    migrations/001_init.sql   # Section F schema
+    migrations/
+      001_init.sql             # Section F schema
+      002_seed_skills.sql      # skill taxonomy seed (44 skills)
+      003_candidate_claims.sql # candidate_claims table (checklist item 37)
   docs/
-    BLUEPRINT.md               # this file
-    demo_script.md              # written during Phase 14
+    demo_script.md             # written during Phase 14
+    deploy_runbook.md          # step-by-step live deploy guide (item 34)
+    veridexa_pitch.pptx        # pitch deck (item 36)
+  BLUEPRINT.md                 # this file — repo root
+  CLAUDE.md                    # guidance for Claude Code sessions in this repo
+  render.yaml                  # Render Blueprint
   .env.example
   README.md
 ```
@@ -577,8 +588,12 @@ ALLOWED_ORIGINS=http://localhost:3000,https://<vercel-domain>
 Frontend (`frontend/.env.local`):
 ```
 NEXT_PUBLIC_API_BASE_URL=
-NEXT_PUBLIC_SUPABASE_URL=      # only if frontend reads Supabase directly for anything (prefer: it doesn't — go through backend)
 ```
+(`NEXT_PUBLIC_SUPABASE_URL` was sketched above for if the frontend ever read
+Supabase directly — it never did, everything goes through the backend as
+preferred, so it's not a real env var anywhere: absent from `.env.example`,
+unused in `frontend/`, and correctly not in `docs/deploy_runbook.md`'s env
+var table either.)
 
 No secret key is ever prefixed `NEXT_PUBLIC_`. All Claude/GitHub/Supabase-service-role calls happen server-side in FastAPI only.
 
