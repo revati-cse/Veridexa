@@ -25,6 +25,7 @@ from app.schemas.github import (
 )
 from app.schemas.job import JobParseRequest, JobParseResponse, JobRequiredSkill, ParsedJob
 from app.schemas.readiness import ReadinessComputeRequest, ReadinessResponse, SkillScoreBreakdown
+from app.schemas.recruiter import CandidateSummary, RecruiterDashboardResponse
 from app.schemas.skill import ClaimedSkill, ClaimsRequest, SkillTaxonomyItem
 from app.schemas.submission import SubmissionCreate
 
@@ -60,6 +61,8 @@ __all__ = [
     "ReadinessComputeRequest",
     "ReadinessResponse",
     "SkillScoreBreakdown",
+    "CandidateSummary",
+    "RecruiterDashboardResponse",
     "ClaimedSkill",
     "ClaimsRequest",
     "SkillTaxonomyItem",

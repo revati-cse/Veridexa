@@ -92,3 +92,14 @@ async def get_challenge_chain(challenge_id: UUID) -> list[Challenge]:
 
     chain.reverse()
     return chain
+
+
+async def get_candidate_ids_for_job(job_id: UUID) -> list[UUID]:
+    """Every distinct candidate who has at least one challenge under this
+    job — the recruiter dashboard's only way to know "who applied", since
+    there's no separate application/enrollment table (Section F)."""
+    if not is_available():
+        return []
+    async with acquire() as conn:
+        rows = await conn.fetch("SELECT DISTINCT user_id FROM challenges WHERE job_id = $1", job_id)
+    return [row["user_id"] for row in rows]

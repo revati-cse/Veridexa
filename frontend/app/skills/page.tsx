@@ -11,6 +11,7 @@ const IMPORTANCE_STYLE: Record<string, string> = {
 };
 
 export default function SkillsPage() {
+  const jobId = useSessionStore((s) => s.jobId);
   const job = useSessionStore((s) => s.job);
 
   if (!job) {
@@ -30,6 +31,12 @@ export default function SkillsPage() {
     <div className="flex flex-col gap-4">
       <h2 className="text-2xl font-semibold">{job.title}</h2>
       <p className="text-slate-600">Required skills extracted from the job description.</p>
+      {jobId && (
+        <p className="text-xs text-slate-400">
+          Job ID: <span className="font-mono">{jobId}</span> — recruiters can look up this job&apos;s candidates at{" "}
+          <span className="font-mono">/recruiter</span>.
+        </p>
+      )}
       {job.required_skills.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {job.required_skills.map((rs) => (

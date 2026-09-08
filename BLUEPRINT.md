@@ -688,7 +688,7 @@ Antigravity's role in this split: hand it self-contained tasks from the **Z chec
 
 **BUILD FOURTH** (H29–33): integration smoke test, fixtures/fallback, security pass, polish.
 
-**DO NOT BUILD UNLESS TIME REMAINS** (only after Fourth is fully done): `freshness_engine`, skill evolution timeline, recruiter dashboard, candidate comparison, team capability graph, multi-role support beyond Data Analyst, real auth/login.
+**DO NOT BUILD UNLESS TIME REMAINS** (only after Fourth is fully done): skill evolution timeline, candidate comparison, team capability graph, multi-role support beyond Data Analyst, real auth/login. `freshness_engine` and a recruiter dashboard were both explicitly requested and built anyway (see `app/services/freshness_engine.py`, `app/services/recruiter_dashboard.py`, `frontend/app/recruiter/page.tsx`) — the recruiter dashboard is DB-backed only (no session-state fallback exists for cross-candidate data) and computed with no persisted claims or GitHub evidence, since neither is stored in the DB yet; see CLAUDE.md.
 
 ---
 

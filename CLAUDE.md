@@ -41,7 +41,7 @@ cd backend && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload          # http://localhost:8000, /health
 
-# backend tests (125+ tests, no live network needed — Claude/GitHub calls are mocked)
+# backend tests (130+ tests, no live network needed — Claude/GitHub calls are mocked)
 cd backend && source venv/bin/activate && python -m pytest -q
 
 # end-to-end smoke test against a *running* backend (see docs/demo_script.md)
@@ -136,8 +136,37 @@ calls it yet (`api.computeFreshness` exists in `lib/api.ts` but is unused) —
 add one only if asked; it wasn't part of the original 7-screen flow
 (Section Q).
 
+## Recruiter dashboard (P3, backend + frontend)
+
+`GET /recruiter/jobs/{job_id}/dashboard` (`recruiter_dashboard.py`,
+`frontend/app/recruiter/page.tsx`) ranks candidates for a job by
+`readiness_score` — computed via the exact same `readiness_engine.
+compute_readiness` the candidate's own dashboard uses, never a separate
+recruiter-side formula. This is the **one endpoint in the API that requires
+a database** — there's no way to know "which candidates applied to this
+job" from a single session's state, so `db_available: false` (empty
+`candidates`) is the response whenever `DATABASE_URL` isn't configured.
+
+Two deliberate simplifications, both because the data isn't persisted
+anywhere yet: `claims=[]` (no `claims` table exists — `POST /candidates/
+claims` is still a stub) and `github_evidence=None` (GitHub analysis is
+never written to storage) for every candidate. The score reflects challenge
+performance only. There's also no recruiter/candidate role or auth of any
+kind — the `/recruiter` page is just another unauthenticated route; the job
+ID it needs is shown on the Skills screen after a candidate parses a JD
+(`skills/page.tsx`).
+
+If you add a new `db/*.py` write, keep `app.db.challenges.
+get_candidate_ids_for_job` and `app.db.submissions.
+get_submission_history_for_job` in mind — they reconstruct `Challenge`/
+`SubmissionEvaluationResponse` objects from persisted rows, and
+`evaluations` doesn't have an `evidence` column (only the separate
+`evidence` table does), so reconstructed evaluations always have
+`evidence=[]`. That's fine today: neither `readiness_engine` nor
+`skill_gap_engine` reads that field.
+
 ## What's not built yet / deliberately out of scope
 
-Auth, recruiter dashboard, candidate comparison, and timeline views are
-P2/P3 per BLUEPRINT.md Section B — don't add them unless explicitly asked.
-This is a 2-developer, 36-hour hackathon scope; resist gold-plating.
+Auth, candidate comparison, and timeline views are P3 per BLUEPRINT.md
+Section B — don't add them unless explicitly asked. This is a
+2-developer, 36-hour hackathon scope; resist gold-plating.

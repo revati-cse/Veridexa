@@ -14,6 +14,7 @@ import type {
   JobParseResponse,
   ReadinessComputeRequest,
   ReadinessResponse,
+  RecruiterDashboardResponse,
   SkillTaxonomyItem,
   SubmissionCreate,
   SubmissionEvaluationResponse,
@@ -89,4 +90,9 @@ export const api = {
   // P2/optional (see freshness_engine.py) — not called from any screen yet.
   computeFreshness: (body: FreshnessComputeRequest) =>
     request<FreshnessResponse>("/freshness/compute", { method: "POST", body: JSON.stringify(body) }),
+
+  // P3/optional (see recruiter_dashboard.py) — requires DATABASE_URL to be
+  // configured on the backend; see RecruiterDashboardResponse.db_available.
+  getRecruiterDashboard: (jobId: string) =>
+    request<RecruiterDashboardResponse>(`/recruiter/jobs/${jobId}/dashboard`),
 };

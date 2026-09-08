@@ -10,11 +10,13 @@ regardless of that history.
 
 from uuid import UUID
 
-from app.db.challenges import save_challenge
+import asyncpg
+
+from app.db.challenges import _row_to_challenge, save_challenge
 from app.db.pool import acquire, is_available
 from app.db.users import ensure_user
 from app.schemas.challenge import Challenge
-from app.schemas.evaluation import SubmissionEvaluationResponse
+from app.schemas.evaluation import SkillGapItem, SqlExecutionResult, SubmissionEvaluationResponse, SubmissionRecord
 
 
 async def save_submission_and_evaluation(
@@ -51,3 +53,62 @@ async def save_submission_and_evaluation(
             [gap.model_dump() for gap in response.skill_gaps],
             response.sql_execution_result.model_dump() if response.sql_execution_result else None,
         )
+
+
+def _row_to_submission_record(row: asyncpg.Record) -> SubmissionRecord:
+    sql_result = row["sql_execution_result"]
+    return SubmissionRecord(
+        challenge=_row_to_challenge(row),
+        evaluation=SubmissionEvaluationResponse(
+            submission_id=row["submission_id"],
+            evaluation_id=row["evaluation_id"],
+            rubric_scores=row["rubric_scores"],
+            overall_score=row["overall_score"],
+            strengths=list(row["strengths"]),
+            weaknesses=list(row["weaknesses"]),
+            evidence=[],  # evaluations doesn't persist this column — see evidence.py's separate table
+            skill_gaps=[SkillGapItem(**gap) for gap in row["skill_gaps"]],
+            sql_execution_result=SqlExecutionResult(**sql_result) if sql_result else None,
+            demo_fallback=False,  # historical rows don't record which path produced them
+            evaluated_at=row["evaluated_at"],
+        ),
+    )
+
+
+async def get_submission_history_for_job(job_id: UUID, user_id: UUID) -> list[SubmissionRecord]:
+    """One candidate's full challenge+evaluation history for a job, oldest
+    first — the same shape readiness_engine.compute_readiness expects for
+    `submission_history`, reconstructed from persisted rows instead of the
+    frontend's session store. Backs the recruiter dashboard (Section B, P3):
+    there's no other way to see a candidate's performance across a job
+    without a database, since the live compute path only ever knows about
+    one candidate's current session.
+
+    `evidence` is always empty on the reconstructed evaluations (the
+    `evaluations` table doesn't persist per-observation evidence rows — see
+    the module docstring above) — harmless here since neither
+    readiness_engine nor skill_gap_engine reads that field, only
+    evidence_engine.py does, and this function isn't used for that.
+    Only the most recent submission per challenge is used, in case a
+    challenge was ever submitted more than once."""
+    if not is_available():
+        return []
+    async with acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT c.*, s.id AS submission_id, e.id AS evaluation_id,
+                   e.rubric_scores, e.overall_score, e.strengths, e.weaknesses,
+                   e.skill_gaps, e.sql_execution_result, e.created_at AS evaluated_at
+            FROM challenges c
+            JOIN LATERAL (
+                SELECT * FROM submissions sub
+                WHERE sub.challenge_id = c.id
+                ORDER BY sub.submitted_at DESC LIMIT 1
+            ) s ON true
+            JOIN evaluations e ON e.submission_id = s.id
+            WHERE c.job_id = $1 AND c.user_id = $2
+            ORDER BY c.created_at ASC
+            """,
+            job_id, user_id,
+        )
+    return [_row_to_submission_record(row) for row in rows]

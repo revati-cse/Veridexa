@@ -337,3 +337,33 @@ export interface FreshnessResponse {
   user_id: string;
   skills: SkillFreshnessItem[];
 }
+
+// ---------------------------------------------------------------------------
+// recruiter.py (P3/optional — see recruiter_dashboard.py)
+// ---------------------------------------------------------------------------
+
+/** readiness_score here is computed by the exact same formula as
+ * ReadinessResponse.readiness_score, from persisted challenge/evaluation
+ * history — never a separately-derived recruiter-side number. Computed
+ * without claims or GitHub evidence (neither is persisted anywhere yet),
+ * so it reflects challenge performance only. */
+export interface CandidateSummary {
+  user_id: string;
+  readiness_score: number; // 0-100
+  challenges_completed: number;
+  strengths: string[];
+  weaknesses: string[];
+  skill_gaps: SkillGapItem[];
+}
+
+/** The one response in this API that requires a database — there's no
+ * "compute from session state" fallback for "which candidates applied to
+ * this job" (that spans multiple candidates' sessions). db_available: false
+ * means the dashboard is empty because no database is configured, not
+ * because no one has applied yet — show that distinction to the user. */
+export interface RecruiterDashboardResponse {
+  job_id: string;
+  job_title: string;
+  db_available: boolean;
+  candidates: CandidateSummary[];
+}
