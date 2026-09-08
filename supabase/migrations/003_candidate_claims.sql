@@ -1,7 +1,7 @@
 -- Veridexa AI — candidate claims
 -- Closes the gap noted in BLUEPRINT.md checklist item 11 / CLAUDE.md:
 -- POST /candidates/claims previously only acknowledged receipt. A claim is
--- never evidence (Section 2/L) — this table exists purely so
+-- never evidence (Section M) — this table exists purely so
 -- readiness_engine's claim-alignment bonus (capped at 10% weight, Section N)
 -- has something real to read per candidate, instead of every caller having
 -- to pass claims=[] because nothing was ever persisted.

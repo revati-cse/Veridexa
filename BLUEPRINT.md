@@ -273,6 +273,18 @@ create table evidence (
   confidence numeric check (confidence between 0 and 1),
   created_at timestamptz default now()
 );
+
+-- Added later (migration 003, checklist item 37) — not in the original
+-- sketch. A claim is never evidence (Section M): this table exists purely
+-- so readiness_engine's claim-alignment bonus has something real to read
+-- per candidate, instead of every caller passing claims=[].
+create table candidate_claims (
+  user_id uuid not null references users(id) on delete cascade,
+  skill_id uuid not null references skills(id) on delete cascade,
+  level text not null check (level in ('beginner','intermediate','advanced')),
+  claimed_at timestamptz not null default now(),
+  primary key (user_id, skill_id)
+);
 ```
 
 No graph DB. `parent_challenge_id` self-reference is enough to reconstruct mutation lineage for the UI ("Challenge mutated based on your previous performance" + link back).
