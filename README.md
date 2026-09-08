@@ -8,8 +8,8 @@ See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full technical design.
 
 Built for the IIC 3.0 hackathon at Manipal University Jaipur — the full
 9-engine backend, all 7 candidate screens plus a recruiter dashboard, and
-DB persistence are implemented and tested (140+ backend tests). 37 of
-[BLUEPRINT.md's 38 checklist items](./BLUEPRINT.md#numbered-implementation-checklist)
+DB persistence are implemented and tested (140+ backend tests). 36 of
+[BLUEPRINT.md's 37 checklist items](./BLUEPRINT.md#numbered-implementation-checklist)
 are checked off. The one open item is **live deployment** (item 34):
 the deployment config itself — `render.yaml`, `backend/Procfile`,
 `.env.example`, CORS wiring — is written and verified (see CLAUDE.md's
@@ -41,6 +41,7 @@ npm run dev
 ```
 psql "$DATABASE_URL" -f supabase/migrations/001_init.sql
 psql "$DATABASE_URL" -f supabase/migrations/002_seed_skills.sql
+psql "$DATABASE_URL" -f supabase/migrations/003_candidate_claims.sql
 ```
 
 ## Deployment
@@ -88,7 +89,8 @@ service settings, and set the same env vars as above.
 1. Create a Supabase project, copy its Postgres connection string into
    `DATABASE_URL` and its project URL / service role key into
    `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` on the backend.
-2. Run both migrations against it, in order, via the Supabase SQL editor or
-   `psql`: `supabase/migrations/001_init.sql` then `002_seed_skills.sql`.
+2. Run all three migrations against it, in order, via the Supabase SQL
+   editor or `psql`: `supabase/migrations/001_init.sql`, then
+   `002_seed_skills.sql`, then `003_candidate_claims.sql`.
 3. No further setup — `backend/app/db/pool.py` connects lazily on startup
    and the API degrades gracefully (see above) if this step is skipped.
