@@ -165,8 +165,16 @@ get_submission_history_for_job` in mind — they reconstruct `Challenge`/
 `evidence=[]`. That's fine today: neither `readiness_engine` nor
 `skill_gap_engine` reads that field.
 
+**Candidate comparison** lives inside the same `/recruiter` page, not a
+separate route or endpoint: `CandidateSummary.skill_breakdown` (the same
+per-skill rows `compute_readiness` already produces) rides along on the
+existing dashboard payload, and the frontend just lets the recruiter check
+2+ candidates to render them side by side. Don't add a `/compare` endpoint
+— there's nothing it would compute that the dashboard call doesn't already
+return.
+
 ## What's not built yet / deliberately out of scope
 
-Auth, candidate comparison, and timeline views are P3 per BLUEPRINT.md
-Section B — don't add them unless explicitly asked. This is a
-2-developer, 36-hour hackathon scope; resist gold-plating.
+Auth and timeline views are P3 per BLUEPRINT.md Section B — don't add them
+unless explicitly asked. This is a 2-developer, 36-hour hackathon scope;
+resist gold-plating.

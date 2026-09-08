@@ -346,7 +346,9 @@ export interface FreshnessResponse {
  * ReadinessResponse.readiness_score, from persisted challenge/evaluation
  * history — never a separately-derived recruiter-side number. Computed
  * without claims or GitHub evidence (neither is persisted anywhere yet),
- * so it reflects challenge performance only. */
+ * so it reflects challenge performance only. skill_breakdown is the same
+ * per-skill rows compute_readiness produces — the candidate-comparison
+ * view on /recruiter is built directly from this, no second endpoint. */
 export interface CandidateSummary {
   user_id: string;
   readiness_score: number; // 0-100
@@ -354,6 +356,7 @@ export interface CandidateSummary {
   strengths: string[];
   weaknesses: string[];
   skill_gaps: SkillGapItem[];
+  skill_breakdown: SkillScoreBreakdown[];
 }
 
 /** The one response in this API that requires a database — there's no

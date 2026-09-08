@@ -65,6 +65,7 @@ async def get_dashboard(job_id: UUID) -> RecruiterDashboardResponse:
                 strengths=readiness.strengths,
                 weaknesses=readiness.weaknesses,
                 skill_gaps=readiness.skill_gaps,
+                skill_breakdown=readiness.skill_breakdown,
             )
         )
 

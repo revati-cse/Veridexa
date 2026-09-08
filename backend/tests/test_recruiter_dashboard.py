@@ -133,6 +133,12 @@ async def test_dashboard_ranks_candidates_by_readiness_score_descending():
         assert [c.user_id for c in response.candidates] == [strong_candidate, weak_candidate]
         assert response.candidates[0].readiness_score > response.candidates[1].readiness_score
         assert all(c.challenges_completed == 1 for c in response.candidates)
+
+        # skill_breakdown carries the same per-skill rows compute_readiness
+        # produces — this is what a candidate-comparison view is built from.
+        strong_breakdown = response.candidates[0].skill_breakdown
+        assert [row.skill for row in strong_breakdown] == ["SQL"]
+        assert strong_breakdown[0].score == response.candidates[0].readiness_score
     finally:
         await _cleanup(job_id, [strong_candidate, weak_candidate])
 
