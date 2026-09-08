@@ -1,0 +1,23 @@
+{
+  "rubric_scores": {
+    "correctness": 88,
+    "technical_logic": 82,
+    "reasoning": 88,
+    "edge_cases": 75,
+    "efficiency": 80
+  },
+  "strengths": [
+    "Correctly identified an appropriate statistical comparison between the two months",
+    "Reasoned explicitly about sample size and variance before drawing a conclusion",
+    "Stated assumptions clearly rather than asserting significance outright"
+  ],
+  "weaknesses": [
+    "Did not report a p-value or confidence interval alongside the conclusion",
+    "Could have noted a non-parametric alternative given how small the sample is"
+  ],
+  "evidence": [
+    { "skill": "Statistics", "observation": "Applied a sound significance-testing approach and reasoned correctly about variance vs. sample size", "confidence": 0.83 },
+    { "skill": "SQL", "observation": "Correctly aggregated and compared monthly order amounts", "confidence": 0.7 }
+  ],
+  "skill_gaps": []
+}

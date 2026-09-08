@@ -108,3 +108,25 @@ def test_rubric_scores_requires_all_five_canonical_criteria():
 def test_rubric_scores_rejects_out_of_range_values():
     with pytest.raises(ValidationError):
         RubricScores(correctness=150, technical_logic=80, reasoning=70, edge_cases=60, efficiency=50)
+
+
+def test_ai_fallback_uses_the_mutated_fixture_for_a_mutated_challenge():
+    # A mutated challenge (parent_challenge_id set) targets a different skill
+    # than the original — falling back to the same static demo_evaluation.json
+    # fixture for both would show SQL-flavored weaknesses on what's actually a
+    # Statistics challenge. The fallback must pick the fixture that matches.
+    mutated_challenge = CHALLENGE.model_copy(
+        update={"id": uuid4(), "parent_challenge_id": CHALLENGE.id, "required_skills": ["Statistics", "SQL"]}
+    )
+
+    with patch(
+        "app.services.evaluation_engine.call_structured",
+        new=AsyncMock(side_effect=AIServiceUnavailable("no API key configured")),
+    ):
+        original_response, _ = asyncio.run(evaluate_submission(CHALLENGE, "SELECT 1", "explanation"))
+        mutated_response, _ = asyncio.run(evaluate_submission(mutated_challenge, "SELECT 1", "explanation"))
+
+    assert original_response.weaknesses != mutated_response.weaknesses
+    assert any("customer_id" in w for w in original_response.weaknesses)
+    assert any("statistic" in w.lower() or "p-value" in w.lower() for w in mutated_response.weaknesses)
+    assert mutated_response.overall_score > original_response.overall_score

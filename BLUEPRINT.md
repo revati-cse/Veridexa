@@ -19,7 +19,7 @@ A candidate can, in one continuous flow:
 6. Veridexa runs the query programmatically (SQLite in-memory) + sends result/explanation to Claude for rubric evaluation → structured score + strengths/weaknesses/evidence.
 7. Veridexa computes **Job Readiness %** (backend formula, not LLM) and shows the dashboard: skill scores, evidence, strengths, weaknesses, **skill gaps**.
 8. Candidate clicks **"Improve My Readiness"** → backend runs the **Challenge Mutation Engine**, which builds a new challenge that specifically targets the previous weak points. UI explicitly states: *"Challenge mutated based on your previous performance."*
-9. Candidate resubmits → readiness updates live (e.g., Statistics 61% → 84%, overall 79% → 86%).
+9. Candidate resubmits → readiness updates live (verified via `scripts/smoke_test.py` against the checked-in fixtures — see `docs/demo_script.md`: Statistics 38.8% → 70.8%, overall 70.4% → 76.5%).
 
 Everything else (freshness, timeline, recruiter dashboard, multi-role support) is optional and explicitly deprioritized below.
 
@@ -603,7 +603,7 @@ Given 36 hours, testing = **fast, targeted, manual-first**:
 
 ## W. DEMO FALLBACK
 
-`backend/app/fixtures/` holds pre-generated, hand-checked JSON for the exact demo path (Data Analyst JD → challenge → evaluation with realistic weak Statistics score → readiness 79% → gap → mutated challenge → improved evaluation with Statistics 84% → readiness 86%), matching Section 26 numbers. Each AI service falls back to its fixture only after retries are exhausted, and only for that one call — this keeps a flaky venue Wi-Fi/API from ever hard-failing the live demo, while still running live (and thus honestly) whenever the network cooperates. Never fabricate results silently in the "happy path" — fallback is purely a reliability net, and it should be rare in rehearsal.
+`backend/app/fixtures/` holds pre-generated, hand-checked JSON for the exact demo path (Data Analyst JD → challenge → evaluation with realistic weak Statistics score → readiness 70.4% → gap → mutated challenge → improved evaluation with Statistics 70.8% → readiness 76.5%), matching the numbers in `docs/demo_script.md` (verified by running `scripts/smoke_test.py`, not hand-picked). `evaluation_engine.py` fixture selection is challenge-aware (`demo_evaluation.json` for an original challenge, `demo_evaluation_mutated.json` for a mutated one, keyed on `parent_challenge_id`) so a network drop mid-mutation doesn't show SQL-flavored weaknesses on a Statistics challenge. Each AI service falls back to its fixture only after retries are exhausted, and only for that one call — this keeps a flaky venue Wi-Fi/API from ever hard-failing the live demo, while still running live (and thus honestly) whenever the network cooperates. Never fabricate results silently in the "happy path" — fallback is purely a reliability net, and it should be rare in rehearsal.
 
 ---
 
@@ -621,7 +621,7 @@ See Section 22 in the brief — adopted as-is:
 - H25–29 Skill gap + **challenge mutation** ← core innovation, protect this window
 - H29–31 Integration + bug fixing — **hard checkpoint**: if P0 loop isn't fully working, cut everything below this line
 - H31–33 Optional: freshness / polish animations
-- H33–36 Testing, deployment, PPT, demo rehearsal (rehearse the exact Section 26 numbers twice)
+- H33–36 Testing, deployment, PPT, demo rehearsal (rehearse `docs/demo_script.md` twice)
 
 ---
 
@@ -656,7 +656,7 @@ See Section 22 in the brief — adopted as-is:
 17. Security pass on `github_analyzer` + `sql_runner` (Section 25 hat).
 18. Polish: animations, empty/loading/error states audited on every screen, mutation banner copy, dashboard "why 79%" explainer.
 19. Deployment: backend → Render/Railway, frontend → Vercel, env vars set, CORS confirmed cross-origin.
-20. Demo rehearsal against Section 26 script, twice, with network killed once to confirm fallback works.
+20. Demo rehearsal against `docs/demo_script.md`, twice, with network killed once to confirm fallback works.
 
 ---
 
@@ -724,13 +724,13 @@ Each item is independently completable and testable.
 26. [ ] Implement `challenge_mutation_engine.py` + mutation prompt; wire `/challenges/mutate`.
 27. [ ] Add mutation banner + reuse Screen 5 layout for the mutated challenge (Screen 8).
 28. [ ] Add "Improve My Readiness" button on Screen 7 triggering the mutation flow and looping back to Screen 5/8.
-29. [ ] Write `scripts/smoke_test.py` running the full demo JD through the entire loop.
-30. [ ] Capture a clean successful run's outputs into `backend/app/fixtures/*.json` for fallback.
+29. [x] Write `scripts/smoke_test.py` running the full demo JD through the entire loop.
+30. [x] Capture a clean successful run's outputs into `backend/app/fixtures/*.json` for fallback.
 31. [ ] Wire fixture fallback into every AI service call site.
 32. [ ] Add loading/error/empty states to all 7 frontend routes.
 33. [ ] Security pass on `github_analyzer.py` (prompt-injection delimiters, PAT scope) and `sql_runner.py` (denylist, timeout, isolation).
 34. [ ] Deploy backend (Render/Railway) and frontend (Vercel); verify CORS and env vars in production.
-35. [ ] Full rehearsal of the Section 26 demo script twice; kill network once mid-rehearsal to confirm fallback path is seamless.
+35. [ ] Full rehearsal of `docs/demo_script.md` twice; kill network once mid-rehearsal to confirm fallback path is seamless.
 36. [ ] Prepare PPT following Section 27–29 positioning language, using the actual dashboard screenshots from the rehearsal run.
 
 ---

@@ -21,11 +21,20 @@ from app.schemas.evaluation import EvaluationResult, SqlExecutionResult, Submiss
 
 logger = logging.getLogger(__name__)
 
-_FIXTURE_PATH = Path(__file__).resolve().parent.parent / "fixtures" / "demo_evaluation.json"
+_FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
+_ORIGINAL_FIXTURE_PATH = _FIXTURES_DIR / "demo_evaluation.json"
+_MUTATED_FIXTURE_PATH = _FIXTURES_DIR / "demo_evaluation_mutated.json"
 
 
-def _load_fixture() -> EvaluationResult:
-    data = json.loads(_FIXTURE_PATH.read_text())
+def _load_fixture(challenge: Challenge) -> EvaluationResult:
+    """A mutated challenge (parent_challenge_id set) targets a different
+    skill than the original — falling back to the same static fixture for
+    both would show SQL-flavored weaknesses on a Statistics challenge (or
+    vice versa). Pick the fixture that matches which challenge is actually
+    being evaluated, matching demo_evaluation_mutated.json's improved
+    Statistics narrative to demo_mutation.json's challenge."""
+    path = _MUTATED_FIXTURE_PATH if challenge.parent_challenge_id is not None else _ORIGINAL_FIXTURE_PATH
+    data = json.loads(path.read_text())
     return EvaluationResult.model_validate(data)
 
 
@@ -57,7 +66,7 @@ async def evaluate_submission(
         used_fallback = False
     except AIServiceUnavailable as exc:
         logger.warning("evaluation_engine falling back to fixture: %s", exc)
-        ai_result = _load_fixture()
+        ai_result = _load_fixture(challenge)
         used_fallback = True
 
     rubric_scores = ai_result.rubric_scores.model_dump()
