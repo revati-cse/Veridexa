@@ -197,6 +197,38 @@ don't re-derive it from the key later (see the comment in
 `compute_timeline`, and `test_skill_outside_the_taxonomy_keeps_its_
 original_casing` in `tests/test_timeline_engine.py`).
 
+## Demo rehearsal status
+
+BLUEPRINT.md checklist item 35 ("full rehearsal of `docs/demo_script.md`
+twice; kill network once mid-rehearsal") has been run and passed twice in
+this environment:
+
+- **Run 1** — a clean `scripts/smoke_test.py` pass against a normally
+  started backend (`DATABASE_URL` configured, no live Claude/GitHub
+  credentials). Readiness went 63.3% → 70.5%, matching the "without GitHub
+  evidence" numbers in `docs/demo_script.md` exactly.
+- **Run 2** — the same in-flight session (same `job_id`, first challenge,
+  and evaluation carried forward) but with the network genuinely killed
+  partway through, between the first readiness check and the mutation
+  step: the backend was restarted with a fake-but-real-shaped
+  `ANTHROPIC_API_KEY` (so `claude_client.py` actually attempts a live
+  round-trip instead of short-circuiting on "no key configured") and every
+  outbound route pointed at a proxy nothing listens on, `NO_PROXY` cleared
+  too since this sandbox otherwise routes `api.anthropic.com` around the
+  proxy directly. The rest of the demo — mutate, resubmit, readiness,
+  history — completed with `demo_fallback: true` on every AI-touched
+  response, no 500s, and the identical final readiness numbers as Run 1.
+  Postgres (a local connection, not internet-routed) kept working
+  throughout — worth distinguishing from the AI/GitHub fallback story if
+  asked live.
+
+The orchestration script for Run 2 was a one-off (scratchpad, not
+committed) — to redo it, restart the backend mid-script with
+`HTTPS_PROXY=http://127.0.0.1:1` (and `https_proxy`, `HTTP_PROXY`,
+`http_proxy`, and empty `NO_PROXY`/`no_proxy`) plus a placeholder
+`ANTHROPIC_API_KEY`, and confirm `demo_fallback: true` shows up on the
+mutate/submit responses rather than a 500.
+
 ## What's not built yet / deliberately out of scope
 
 Auth is P3 per BLUEPRINT.md Section B — don't add it unless explicitly
