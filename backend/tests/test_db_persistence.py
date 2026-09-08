@@ -26,6 +26,7 @@ import pytest
 from app.config import settings
 from app.db import pool as db_pool
 from app.db.challenges import get_challenge, get_challenge_chain, save_challenge
+from app.db.claims import get_claims, save_claims
 from app.db.evidence import save_evidence_rows
 from app.db.github import save_repository_analysis
 from app.db.jobs import get_job, save_job
@@ -37,6 +38,7 @@ from app.schemas.evaluation import SubmissionEvaluationResponse
 from app.schemas.evidence import EvidenceItem
 from app.schemas.github import LanguageDetected, SkillEvidenceItem
 from app.schemas.job import JobRequiredSkill, ParsedJob
+from app.schemas.skill import ClaimedSkill
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL", "postgresql://veridexa:veridexa_dev@localhost:5432/veridexa"
@@ -133,6 +135,28 @@ async def test_ensure_user_is_idempotent():
         assert count == 1
     finally:
         await _execute("DELETE FROM users WHERE id = $1", user_id)
+
+
+@db_test
+async def test_save_claims_round_trips_upserts_and_skips_unknown_skills():
+    user_id = uuid4()
+    try:
+        await save_claims(user_id, [
+            ClaimedSkill(skill="SQL", level="beginner"),
+            ClaimedSkill(skill="Not A Real Skill", level="advanced"),
+        ])
+        claims = await get_claims(user_id)
+        assert [(c.skill, c.level) for c in claims] == [("SQL", "beginner")]
+
+        # Re-claiming the same skill at a new level upserts rather than
+        # duplicating (primary key is (user_id, skill_id)).
+        await save_claims(user_id, [ClaimedSkill(skill="SQL", level="advanced")])
+        claims = await get_claims(user_id)
+        assert [(c.skill, c.level) for c in claims] == [("SQL", "advanced")]
+    finally:
+        await _execute("DELETE FROM users WHERE id = $1", user_id)
+
+    assert await get_claims(user_id) == []
 
 
 @db_test

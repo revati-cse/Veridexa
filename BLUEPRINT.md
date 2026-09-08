@@ -696,40 +696,40 @@ Antigravity's role in this split: hand it self-contained tasks from the **Z chec
 
 Each item is independently completable and testable.
 
-1. [ ] Write `supabase/migrations/001_init.sql` from Section F; apply to a Supabase project.
-2. [ ] Seed `skills` table with the 30–50 taxonomy entries + categories.
-3. [ ] Define Pydantic schemas for Job, Skill, Challenge, Submission, Evaluation, Evidence, GithubAnalysis, Readiness in `backend/app/schemas/`.
-4. [ ] Mirror those as TypeScript interfaces in `frontend/lib/types.ts`.
-5. [ ] Scaffold FastAPI `main.py`, CORS, health check route.
-6. [ ] Scaffold Next.js app with the 7 routes (Section Q) rendering placeholder content.
-7. [ ] Build `claude_client.py` (async call + retry + Pydantic-validated parse + fixture fallback hook).
-8. [ ] Implement `job_parser.py` + prompt + unit test with 2 sample JDs.
-9. [ ] Wire `/jobs/parse` route; connect Screen 2 form → Screen 3 skill list.
-10. [ ] Implement skill normalization map in `skill_engine.py`; wire `/skills/taxonomy`.
-11. [ ] Build claim-entry UI (Screen 4 claim half) + `/candidates/claims` persistence.
-12. [ ] Implement GitHub URL validation + metadata/tree fetch in `github_analyzer.py`.
-13. [ ] Implement file filter/rank/select logic (Section I steps 5–6) with unit tests on a fixture file-tree JSON.
-14. [ ] Implement content fetch + truncation + token-cap enforcement.
-15. [ ] Write GitHub analysis prompt + Pydantic response schema; wire `/github/analyze`.
-16. [ ] Build claim-vs-evidence table UI on Screen 4.
-17. [ ] Build `sql_runner.py` in-memory SQLite sandbox with timeout + statement-type denylist; unit test valid/invalid/malicious inputs.
-18. [ ] Implement `challenge_generator.py` + prompt; wire `/challenges/generate`.
-19. [ ] Build Screen 5: challenge brief + Monaco SQL editor + explanation field + submit.
-20. [ ] Implement `evaluation_engine.py`: run sandbox, call evaluation prompt, compute weighted `overall_score`.
-21. [ ] Wire `/submissions`; build Screen 6 rubric/strengths/weaknesses UI.
-22. [ ] Implement `evidence_engine.py` to compose `evidence` rows from challenge + github sources.
-23. [ ] Implement `readiness_engine.py` per Section N; unit test against hand-computed expected values.
-24. [ ] Wire `/readiness/{user}/{job}`; build Screen 7 gauge + skill chart + "why X%" explainer.
-25. [ ] Implement `skill_gap_engine.py` per Section O; add gap cards to Screen 7.
-26. [ ] Implement `challenge_mutation_engine.py` + mutation prompt; wire `/challenges/mutate`.
-27. [ ] Add mutation banner + reuse Screen 5 layout for the mutated challenge (Screen 8).
-28. [ ] Add "Improve My Readiness" button on Screen 7 triggering the mutation flow and looping back to Screen 5/8.
+1. [x] Write `supabase/migrations/001_init.sql` from Section F; apply to a Supabase project. (Applied repeatedly to a local Postgres 16 stand-in for testing — no real Supabase project credentials were ever available in this environment; a real Supabase project still needs the migration run against it before production use.)
+2. [x] Seed `skills` table with the 30–50 taxonomy entries + categories. (44 skills, `002_seed_skills.sql`.)
+3. [x] Define Pydantic schemas for Job, Skill, Challenge, Submission, Evaluation, Evidence, GithubAnalysis, Readiness in `backend/app/schemas/`.
+4. [x] Mirror those as TypeScript interfaces in `frontend/lib/types.ts`.
+5. [x] Scaffold FastAPI `main.py`, CORS, health check route.
+6. [x] Scaffold Next.js app with the 7 routes (Section Q) rendering placeholder content. (Now fully implemented, not just placeholders — plus a bonus `/recruiter` route.)
+7. [x] Build `claude_client.py` (async call + retry + Pydantic-validated parse + fixture fallback hook).
+8. [x] Implement `job_parser.py` + prompt + unit test with 2 sample JDs.
+9. [x] Wire `/jobs/parse` route; connect Screen 2 form → Screen 3 skill list.
+10. [x] Implement skill normalization map in `skill_engine.py`; wire `/skills/taxonomy`.
+11. [x] Build claim-entry UI (Screen 4 claim half) + `/candidates/claims` persistence. (Persistence landed later than the UI — `candidate_claims` table, migration 003, `app/db/claims.py` — see CLAUDE.md.)
+12. [x] Implement GitHub URL validation + metadata/tree fetch in `github_analyzer.py`.
+13. [x] Implement file filter/rank/select logic (Section I steps 5–6) with unit tests on a fixture file-tree JSON.
+14. [x] Implement content fetch + truncation + token-cap enforcement.
+15. [x] Write GitHub analysis prompt + Pydantic response schema; wire `/github/analyze`.
+16. [x] Build claim-vs-evidence table UI on Screen 4.
+17. [x] Build `sql_runner.py` in-memory SQLite sandbox with timeout + statement-type denylist; unit test valid/invalid/malicious inputs.
+18. [x] Implement `challenge_generator.py` + prompt; wire `/challenges/generate`.
+19. [x] Build Screen 5: challenge brief + Monaco SQL editor + explanation field + submit.
+20. [x] Implement `evaluation_engine.py`: run sandbox, call evaluation prompt, compute weighted `overall_score`.
+21. [x] Wire `/submissions`; build Screen 6 rubric/strengths/weaknesses UI.
+22. [x] Implement `evidence_engine.py` to compose `evidence` rows from challenge + github sources.
+23. [x] Implement `readiness_engine.py` per Section N; unit test against hand-computed expected values.
+24. [x] Wire readiness computation; build Screen 7 gauge + skill chart + "why X%" explainer. (Endpoint is `POST /readiness/compute`, not `GET /readiness/{user}/{job}` — the "no DB yet" full-context-in-body contract used throughout this API; see CLAUDE.md.)
+25. [x] Implement `skill_gap_engine.py` per Section O; add gap cards to Screen 7.
+26. [x] Implement `challenge_mutation_engine.py` + mutation prompt; wire `/challenges/mutate`.
+27. [x] Add mutation banner + reuse Screen 5 layout for the mutated challenge (Screen 8).
+28. [x] Add "Improve My Readiness" button on Screen 7 triggering the mutation flow and looping back to Screen 5/8.
 29. [x] Write `scripts/smoke_test.py` running the full demo JD through the entire loop.
 30. [x] Capture a clean successful run's outputs into `backend/app/fixtures/*.json` for fallback.
-31. [ ] Wire fixture fallback into every AI service call site.
-32. [ ] Add loading/error/empty states to all 7 frontend routes.
-33. [ ] Security pass on `github_analyzer.py` (prompt-injection delimiters, PAT scope) and `sql_runner.py` (denylist, timeout, isolation).
-34. [ ] Deploy backend (Render/Railway) and frontend (Vercel); verify CORS and env vars in production.
+31. [x] Wire fixture fallback into every AI service call site.
+32. [x] Add loading/error/empty states to all 7 frontend routes.
+33. [x] Security pass on `github_analyzer.py` (prompt-injection delimiters, PAT scope) and `sql_runner.py` (denylist, timeout, isolation).
+34. [ ] Deploy backend (Render/Railway) and frontend (Vercel); verify CORS and env vars in production. (Deployment config exists — `render.yaml`, `backend/Procfile`, `.env.example`, the README's deployment section — but actually deploying to live Render/Railway/Vercel/Supabase accounts needs credentials this environment doesn't have. This is the one item that genuinely can't be finished here.)
 35. [x] Full rehearsal of `docs/demo_script.md` twice; kill network once mid-rehearsal to confirm fallback path is seamless.
 36. [x] Prepare PPT (`docs/veridexa_pitch.pptx`) using positioning language from Section A/B and `docs/demo_script.md`'s pitch/closing lines, and real dashboard screenshots captured live via Playwright (not mockups) — no "Section 27–29" exists in this document; that was a stale reference to the original draft's numbering.
 

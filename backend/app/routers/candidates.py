@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
+from app.db import safe_write
+from app.db.claims import save_claims as save_claims_to_db
 from app.schemas import ClaimsRequest
 
 router = APIRouter(prefix="/candidates", tags=["candidates"])
@@ -16,6 +18,10 @@ class ClaimsSavedResponse(BaseModel):
 
 @router.post("/claims", response_model=ClaimsSavedResponse)
 async def save_claims(request: ClaimsRequest) -> ClaimsSavedResponse:
-    """STUB: acknowledges receipt only. Real implementation (Phase 6) persists
-    each ClaimedSkill against the normalized skill_id in `skills`."""
+    """Best-effort persistence, same as every other db/*.py write in this
+    API — the frontend's session store (not this table) stays the primary
+    read path for the candidate's own flow; persisted claims exist so the
+    recruiter dashboard's claim-alignment bonus has something real to read
+    per candidate instead of always passing claims=[]."""
+    await safe_write(save_claims_to_db(request.user_id, request.claims))
     return ClaimsSavedResponse(claims_saved=len(request.claims))

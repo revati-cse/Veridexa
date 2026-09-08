@@ -18,12 +18,14 @@ from fastapi.testclient import TestClient
 from app.config import settings
 from app.db import pool as db_pool
 from app.db.challenges import save_challenge
+from app.db.claims import save_claims
 from app.db.jobs import save_job
 from app.db.submissions import save_submission_and_evaluation
 from app.main import app
 from app.schemas.challenge import Challenge
 from app.schemas.evaluation import SubmissionEvaluationResponse
 from app.schemas.job import JobRequiredSkill, ParsedJob
+from app.schemas.skill import ClaimedSkill
 from app.services.recruiter_dashboard import get_dashboard
 
 TEST_DATABASE_URL = os.environ.get(
@@ -141,6 +143,38 @@ async def test_dashboard_ranks_candidates_by_readiness_score_descending():
         assert strong_breakdown[0].score == response.candidates[0].readiness_score
     finally:
         await _cleanup(job_id, [strong_candidate, weak_candidate])
+
+
+@db_test
+async def test_dashboard_uses_persisted_claims_for_the_claim_alignment_bonus():
+    # Python is required but the candidate was never challenged on it — with
+    # no claim, that skill scores 0 (no evidence, no claim at all). A
+    # persisted claim gives it the uncorroborated bonus (50, per
+    # readiness_engine's _claim_alignment_bonus) instead — proving
+    # recruiter_dashboard.py actually reads real claims now, not claims=[].
+    job_id = uuid4()
+    candidate = uuid4()
+    try:
+        await save_job(
+            job_id, "raw jd text",
+            ParsedJob(title="Data Analyst", required_skills=[
+                JobRequiredSkill(skill="SQL", importance="high"),
+                JobRequiredSkill(skill="Python", importance="high"),
+            ]),
+        )
+        await save_submission_and_evaluation(_challenge(job_id), candidate, "SELECT 1", "x", _evaluation(80.0))
+
+        before = await get_dashboard(job_id)
+        python_row_before = next(r for r in before.candidates[0].skill_breakdown if r.skill == "Python")
+        assert python_row_before.score == 0
+
+        await save_claims(candidate, [ClaimedSkill(skill="Python", level="intermediate")])
+
+        after = await get_dashboard(job_id)
+        python_row_after = next(r for r in after.candidates[0].skill_breakdown if r.skill == "Python")
+        assert python_row_after.score == 50
+    finally:
+        await _cleanup(job_id, [candidate])
 
 
 @db_test

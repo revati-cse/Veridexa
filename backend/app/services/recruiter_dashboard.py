@@ -2,19 +2,17 @@
 
 Aggregates candidates across a job by reusing readiness_engine.compute_readiness
 verbatim — a recruiter's number is never computed by different logic than
-the candidate's own dashboard uses. Two deliberate simplifications, made
-because neither claims nor GitHub evidence is persisted anywhere in the DB
-today (Section F has no `claims` table, and github_analyzer's
-claims_vs_evidence is never written to storage — see CLAUDE.md):
+the candidate's own dashboard uses. Real persisted claims (candidate_claims,
+migration 003) now feed into this the same way they would for the
+candidate's own session; github_evidence=None remains for every candidate,
+since GitHub analysis is still never written to storage (see CLAUDE.md) —
+the score reflects challenge performance plus claim alignment, not
+repository evidence.
 
-  - claims=[] for every candidate (no claim-alignment bonus in the score)
-  - github_evidence=None for every candidate (score reflects challenge
-    performance only, not repository evidence)
-
-Both degrade the same way readiness_engine already handles a missing
-component (Section N: the weighted average just excludes it) — this is not
-a special case, it's the same formula every other caller already exercises
-without GitHub evidence or claims.
+github_evidence=None degrades the same way readiness_engine already
+handles a missing component (Section N: the weighted average just excludes
+it) — this is not a special case, it's the same formula every other caller
+already exercises without GitHub evidence.
 
 Unlike every other engine in this codebase, this one requires a database —
 there is no way to know "which candidates applied to this job" from a
@@ -25,6 +23,7 @@ rather than raising when no DATABASE_URL is configured.
 from uuid import UUID
 
 from app.db.challenges import get_candidate_ids_for_job
+from app.db.claims import get_claims
 from app.db.jobs import get_job
 from app.db.pool import is_available
 from app.db.submissions import get_submission_history_for_job
@@ -48,12 +47,13 @@ async def get_dashboard(job_id: UUID) -> RecruiterDashboardResponse:
         if not submission_history:
             continue  # a challenge row with no completed submission isn't a candidate to rank yet
 
+        claims = await get_claims(user_id)
         readiness = compute_readiness(
             user_id=user_id,
             job_id=job_id,
             job_title=job.title,
             required_skills=job.required_skills,
-            claims=[],
+            claims=claims,
             github_evidence=None,
             submission_history=submission_history,
         )

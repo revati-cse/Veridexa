@@ -41,7 +41,7 @@ cd backend && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload          # http://localhost:8000, /health
 
-# backend tests (138+ tests, no live network needed — Claude/GitHub calls are mocked)
+# backend tests (140+ tests, no live network needed — Claude/GitHub calls are mocked)
 cd backend && source venv/bin/activate && python -m pytest -q
 
 # end-to-end smoke test against a *running* backend (see docs/demo_script.md)
@@ -147,14 +147,15 @@ a database** — there's no way to know "which candidates applied to this
 job" from a single session's state, so `db_available: false` (empty
 `candidates`) is the response whenever `DATABASE_URL` isn't configured.
 
-Two deliberate simplifications, both because the data isn't persisted
-anywhere yet: `claims=[]` (no `claims` table exists — `POST /candidates/
-claims` is still a stub) and `github_evidence=None` (GitHub analysis is
-never written to storage) for every candidate. The score reflects challenge
-performance only. There's also no recruiter/candidate role or auth of any
-kind — the `/recruiter` page is just another unauthenticated route; the job
-ID it needs is shown on the Skills screen after a candidate parses a JD
-(`skills/page.tsx`).
+Real persisted claims (`candidate_claims`, migration 003 — `POST
+/candidates/claims` writes there via `db/claims.py`, no longer a stub) feed
+into each candidate's claim-alignment bonus. `github_evidence=None` remains
+for every candidate, since GitHub analysis is still never written to
+storage — the score reflects challenge performance plus claim alignment,
+not repository evidence. There's also no recruiter/candidate role or auth
+of any kind — the `/recruiter` page is just another unauthenticated route;
+the job ID it needs is shown on the Skills screen after a candidate parses
+a JD (`skills/page.tsx`).
 
 If you add a new `db/*.py` write, keep `app.db.challenges.
 get_candidate_ids_for_job` and `app.db.submissions.
