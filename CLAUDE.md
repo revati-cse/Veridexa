@@ -63,7 +63,7 @@ for new async tests.
 
 - **Claim vs. Evidence vs. Performance.** Never trust a claim. Evidence
   rows only ever come from GitHub analysis or challenge submissions — never
-  from what the candidate typed about themselves. See BLUEPRINT.md Section 2/L.
+  from what the candidate typed about themselves. See BLUEPRINT.md Section L/M.
 - **Backend computes every score.** Claude is asked for rubric sub-scores,
   strengths/weaknesses, and evidence observations — it never computes
   `overall_score`, `difficulty`, or `readiness %` itself. Those are
@@ -303,5 +303,10 @@ all — `libreoffice-core` alone has no presentation import filter.
 
 ## What's not built yet / deliberately out of scope
 
-Auth is P3 per BLUEPRINT.md Section B — don't add it unless explicitly
-asked. This is a 2-developer, 36-hour hackathon scope; resist gold-plating.
+Auth is explicitly out of scope, not merely low-priority — Section T says
+"no auth system needed for a hackathon demo — don't build one" (Section B's
+P3 tier is specifically recruiter dashboard/comparison/timeline, all of
+which *were* built; auth sits below even that, in the unlettered "DO NOT
+BUILD UNLESS TIME REMAINS" list alongside team capability graphs and
+multi-role support). Don't add it unless explicitly asked. This is a
+2-developer, 36-hour hackathon scope; resist gold-plating.
