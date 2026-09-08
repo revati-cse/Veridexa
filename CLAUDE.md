@@ -41,7 +41,7 @@ cd backend && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload          # http://localhost:8000, /health
 
-# backend tests (130+ tests, no live network needed — Claude/GitHub calls are mocked)
+# backend tests (138+ tests, no live network needed — Claude/GitHub calls are mocked)
 cd backend && source venv/bin/activate && python -m pytest -q
 
 # end-to-end smoke test against a *running* backend (see docs/demo_script.md)
@@ -173,8 +173,31 @@ existing dashboard payload, and the frontend just lets the recruiter check
 — there's nothing it would compute that the dashboard call doesn't already
 return.
 
+## Skill evolution timeline (P3, backend + frontend)
+
+`timeline_engine.py` / `POST /timeline/compute` reshapes `submission_history`
+into a per-skill, per-attempt score history — the "Statistics 38.8% ->
+70.8%" narrative (`docs/demo_script.md`) as a full sequence, not just a
+before/after pair. `readiness_engine.py` already collapses the same history
+to "latest wins" for the current score; this exposes every point instead.
+Pure function, no AI call, no DB read — same "no DB yet, compute from
+session state" contract as readiness/evidence/freshness.
+
+Rendered as a "Skill Evolution" section on the Readiness screen
+(`readiness/page.tsx`), fetched alongside readiness whenever
+`submissionHistory` changes. Only shows skills with 2+ entries — a single
+attempt isn't "evolution" yet, so the section stays hidden until a mutation
++ resubmission actually happened. If you add a new skill-name-keyed
+aggregation like this, watch the same casing pitfall this one already hit:
+`normalize_skill` only trims-and-returns an unrecognized (non-taxonomy)
+skill rather than restoring its original case, so deriving a display name
+from an already-lowercased dict key silently lowercases it — compute the
+canonical display name once per skill and carry it alongside the key,
+don't re-derive it from the key later (see the comment in
+`compute_timeline`, and `test_skill_outside_the_taxonomy_keeps_its_
+original_casing` in `tests/test_timeline_engine.py`).
+
 ## What's not built yet / deliberately out of scope
 
-Auth and timeline views are P3 per BLUEPRINT.md Section B — don't add them
-unless explicitly asked. This is a 2-developer, 36-hour hackathon scope;
-resist gold-plating.
+Auth is P3 per BLUEPRINT.md Section B — don't add it unless explicitly
+asked. This is a 2-developer, 36-hour hackathon scope; resist gold-plating.

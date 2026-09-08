@@ -28,6 +28,7 @@ from app.schemas.readiness import ReadinessComputeRequest, ReadinessResponse, Sk
 from app.schemas.recruiter import CandidateSummary, RecruiterDashboardResponse
 from app.schemas.skill import ClaimedSkill, ClaimsRequest, SkillTaxonomyItem
 from app.schemas.submission import SubmissionCreate
+from app.schemas.timeline import SkillTimeline, SkillTimelineEntry, TimelineComputeRequest, TimelineResponse
 
 __all__ = [
     "Challenge",
@@ -67,4 +68,8 @@ __all__ = [
     "ClaimsRequest",
     "SkillTaxonomyItem",
     "SubmissionCreate",
+    "SkillTimeline",
+    "SkillTimelineEntry",
+    "TimelineComputeRequest",
+    "TimelineResponse",
 ]

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useSessionStore } from "@/lib/store";
 import { getCandidateId } from "@/lib/candidateId";
+import type { SkillTimeline } from "@/lib/types";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ErrorState } from "@/components/shared/ErrorState";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -27,9 +28,11 @@ export default function ReadinessPage() {
   const [error, setError] = useState<string | null>(null);
   const [mutating, setMutating] = useState(false);
   const [mutateError, setMutateError] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<SkillTimeline[]>([]);
 
   useEffect(() => {
     if (jobId && job) loadReadiness();
+    if (submissionHistory.length > 0) loadTimeline();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId, job, submissionHistory]);
 
@@ -53,6 +56,16 @@ export default function ReadinessPage() {
       setError(err instanceof ApiError ? err.message : "Failed to load readiness.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadTimeline() {
+    try {
+      const res = await api.computeTimeline({ user_id: getCandidateId(), submission_history: submissionHistory });
+      setTimeline(res.skills);
+    } catch {
+      // Skill Evolution is a supplementary view — a failure here shouldn't
+      // block the primary readiness screen, so it just stays empty.
     }
   }
 
@@ -167,6 +180,40 @@ export default function ReadinessPage() {
                 <span className="font-medium">{gap.skill}:</span> {gap.missing_concepts.join(", ")}
               </li>
             ))}
+          </ul>
+        </div>
+      )}
+
+      {timeline.some((t) => t.entries.length > 1) && (
+        <div>
+          <h3 className="font-semibold">Skill Evolution</h3>
+          <p className="mb-2 text-sm text-slate-500">
+            How each skill&apos;s score has changed across your attempts, including any challenge mutated to target a
+            weak point.
+          </p>
+          <ul className="flex flex-col gap-3">
+            {timeline
+              .filter((t) => t.entries.length > 1)
+              .map((t) => (
+                <li key={t.skill}>
+                  <p className="font-medium">
+                    {t.skill}:{" "}
+                    <span className="font-mono text-sm">
+                      {t.entries.map((e) => `${e.score}%`).join(" → ")}
+                    </span>
+                  </p>
+                  <ul className="mt-1 flex flex-col gap-0.5 text-xs text-slate-500">
+                    {t.entries.map((e, i) => (
+                      <li key={i}>
+                        {e.score}% — {e.challenge_title}
+                        {e.mutation_reason && (
+                          <span className="italic text-slate-400"> (mutated: {e.mutation_reason})</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
           </ul>
         </div>
       )}

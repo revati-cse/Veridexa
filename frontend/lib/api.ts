@@ -18,6 +18,8 @@ import type {
   SkillTaxonomyItem,
   SubmissionCreate,
   SubmissionEvaluationResponse,
+  TimelineComputeRequest,
+  TimelineResponse,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -95,4 +97,9 @@ export const api = {
   // configured on the backend; see RecruiterDashboardResponse.db_available.
   getRecruiterDashboard: (jobId: string) =>
     request<RecruiterDashboardResponse>(`/recruiter/jobs/${jobId}/dashboard`),
+
+  // P3/optional (see timeline_engine.py) — used by the "Skill Evolution"
+  // section on the Readiness screen.
+  computeTimeline: (body: TimelineComputeRequest) =>
+    request<TimelineResponse>("/timeline/compute", { method: "POST", body: JSON.stringify(body) }),
 };

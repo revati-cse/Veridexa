@@ -370,3 +370,32 @@ export interface RecruiterDashboardResponse {
   db_available: boolean;
   candidates: CandidateSummary[];
 }
+
+// ---------------------------------------------------------------------------
+// timeline.py (P3/optional — see timeline_engine.py)
+// ---------------------------------------------------------------------------
+
+/** One attempt's contribution to a skill's score history — the same
+ * overall_score readiness_engine already weighs in (via "latest wins"),
+ * just kept per-attempt instead of collapsed to the most recent one. */
+export interface SkillTimelineEntry {
+  timestamp: string; // ISO 8601
+  score: number; // 0-100
+  challenge_title: string;
+  mutation_reason: string | null;
+}
+
+export interface SkillTimeline {
+  skill: string;
+  entries: SkillTimelineEntry[]; // chronological, oldest first
+}
+
+export interface TimelineComputeRequest {
+  user_id: string;
+  submission_history: SubmissionRecord[];
+}
+
+export interface TimelineResponse {
+  user_id: string;
+  skills: SkillTimeline[];
+}
