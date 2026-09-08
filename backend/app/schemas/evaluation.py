@@ -2,6 +2,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.challenge import Challenge
+
 # Default SQL/data-challenge rubric (BLUEPRINT.md Section K). Backend-assigned
 # and shared by challenge_generator.py and evaluation_engine.py — the LLM is
 # never asked to invent rubric weights, so they're guaranteed to sum to 1.0.
@@ -76,3 +78,15 @@ class SubmissionEvaluationResponse(BaseModel):
     skill_gaps: list[SkillGapItem]
     sql_execution_result: SqlExecutionResult | None = None
     demo_fallback: bool = False
+
+
+class SubmissionRecord(BaseModel):
+    """One completed challenge attempt — the challenge plus the evaluation it
+    received. No DB persistence exists yet, so the frontend accumulates
+    these in its session store (BLUEPRINT.md Section D) as the candidate
+    completes challenges, and passes the full history to evidence_engine.py
+    and readiness_engine.py so multi-round scoring (e.g. after a mutation
+    improves a weak skill) works without a database to query."""
+
+    challenge: Challenge
+    evaluation: SubmissionEvaluationResponse

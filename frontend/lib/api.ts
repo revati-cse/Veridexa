@@ -4,11 +4,13 @@ import type {
   ChallengeMutateRequest,
   ChallengeMutateResponse,
   ClaimsRequest,
+  EvidenceComputeRequest,
   EvidenceListResponse,
   GithubAnalyzeRequest,
   GithubAnalyzeResponse,
   JobParseRequest,
   JobParseResponse,
+  ReadinessComputeRequest,
   ReadinessResponse,
   SkillTaxonomyItem,
   SubmissionCreate,
@@ -76,8 +78,9 @@ export const api = {
   submitSolution: (body: SubmissionCreate) =>
     request<SubmissionEvaluationResponse>("/submissions", { method: "POST", body: JSON.stringify(body) }),
 
-  getReadiness: (userId: string, jobId: string) =>
-    request<ReadinessResponse>(`/readiness/${userId}/${jobId}`),
+  computeReadiness: (body: ReadinessComputeRequest) =>
+    request<ReadinessResponse>("/readiness/compute", { method: "POST", body: JSON.stringify(body) }),
 
-  getEvidence: (userId: string) => request<EvidenceListResponse>(`/evidence/${userId}`),
+  computeEvidence: (body: EvidenceComputeRequest) =>
+    request<EvidenceListResponse>("/evidence/compute", { method: "POST", body: JSON.stringify(body) }),
 };

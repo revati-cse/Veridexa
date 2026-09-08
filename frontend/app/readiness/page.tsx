@@ -13,6 +13,10 @@ import { EmptyState } from "@/components/shared/EmptyState";
 export default function ReadinessPage() {
   const router = useRouter();
   const jobId = useSessionStore((s) => s.jobId);
+  const job = useSessionStore((s) => s.job);
+  const claims = useSessionStore((s) => s.claims);
+  const githubEvidence = useSessionStore((s) => s.githubEvidence);
+  const submissionHistory = useSessionStore((s) => s.submissionHistory);
   const readiness = useSessionStore((s) => s.readiness);
   const setReadiness = useSessionStore((s) => s.setReadiness);
   const currentChallenge = useSessionStore((s) => s.currentChallenge);
@@ -25,16 +29,26 @@ export default function ReadinessPage() {
   const [mutateError, setMutateError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (jobId) loadReadiness();
+    if (jobId && job) loadReadiness();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId]);
+  }, [jobId, job, submissionHistory]);
 
   async function loadReadiness() {
-    if (!jobId) return;
+    if (!jobId || !job) return;
     setLoading(true);
     setError(null);
     try {
-      setReadiness(await api.getReadiness(getCandidateId(), jobId));
+      setReadiness(
+        await api.computeReadiness({
+          user_id: getCandidateId(),
+          job_id: jobId,
+          job_title: job.title,
+          required_skills: job.required_skills,
+          claims,
+          github_evidence: githubEvidence,
+          submission_history: submissionHistory,
+        })
+      );
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load readiness.");
     } finally {
@@ -61,7 +75,7 @@ export default function ReadinessPage() {
     }
   }
 
-  if (!jobId) {
+  if (!jobId || !job) {
     return (
       <EmptyState
         message="No job in progress."

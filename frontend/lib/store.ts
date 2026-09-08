@@ -6,6 +6,7 @@ import type {
   ParsedJob,
   ReadinessResponse,
   SubmissionEvaluationResponse,
+  SubmissionRecord,
 } from "./types";
 
 /**
@@ -13,6 +14,12 @@ import type {
  * beyond the candidate id (lib/candidateId.ts) — the demo flow is linear
  * within one sitting, so a page refresh mid-flow resetting state is an
  * accepted tradeoff at this stage, not a bug to fix yet.
+ *
+ * submissionHistory accumulates every completed challenge attempt
+ * (oldest-first) — evidence_engine and readiness_engine both need the full
+ * history, not just the latest evaluation, since there's no DB to query it
+ * from and a mutated challenge's improved score must still reflect the
+ * skill's earlier, weaker attempt too.
  */
 interface SessionState {
   jobId: string | null;
@@ -21,6 +28,7 @@ interface SessionState {
   githubEvidence: GithubAnalyzeResponse | null;
   currentChallenge: Challenge | null;
   evaluation: SubmissionEvaluationResponse | null;
+  submissionHistory: SubmissionRecord[];
   readiness: ReadinessResponse | null;
 
   setJob: (jobId: string, job: ParsedJob) => void;
@@ -28,6 +36,7 @@ interface SessionState {
   setGithubEvidence: (evidence: GithubAnalyzeResponse | null) => void;
   setCurrentChallenge: (challenge: Challenge) => void;
   setEvaluation: (evaluation: SubmissionEvaluationResponse) => void;
+  addSubmissionRecord: (challenge: Challenge, evaluation: SubmissionEvaluationResponse) => void;
   setReadiness: (readiness: ReadinessResponse) => void;
   reset: () => void;
 }
@@ -39,6 +48,7 @@ const initialState = {
   githubEvidence: null,
   currentChallenge: null,
   evaluation: null,
+  submissionHistory: [],
   readiness: null,
 } satisfies Partial<SessionState>;
 
@@ -49,6 +59,8 @@ export const useSessionStore = create<SessionState>((set) => ({
   setGithubEvidence: (githubEvidence) => set({ githubEvidence }),
   setCurrentChallenge: (currentChallenge) => set({ currentChallenge }),
   setEvaluation: (evaluation) => set({ evaluation }),
+  addSubmissionRecord: (challenge, evaluation) =>
+    set((state) => ({ submissionHistory: [...state.submissionHistory, { challenge, evaluation }] })),
   setReadiness: (readiness) => set({ readiness }),
   reset: () => set(initialState),
 }));

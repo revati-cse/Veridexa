@@ -17,6 +17,7 @@ export default function ChallengePage() {
   const challenge = useSessionStore((s) => s.currentChallenge);
   const setCurrentChallenge = useSessionStore((s) => s.setCurrentChallenge);
   const setEvaluation = useSessionStore((s) => s.setEvaluation);
+  const addSubmissionRecord = useSessionStore((s) => s.addSubmissionRecord);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export default function ChallengePage() {
         explanation,
       });
       setEvaluation(res);
+      addSubmissionRecord(challenge, res);
       router.push("/evaluation");
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : "Failed to submit your solution.");

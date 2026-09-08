@@ -267,12 +267,14 @@ No graph DB. `parent_challenge_id` self-reference is enough to reconstruct mutat
 | POST | `/github/analyze` | Repo URL + claims + required skills → repository evidence |
 | POST | `/challenges/generate` | job_id + required skills + (optional) prior evidence → challenge |
 | POST | `/challenges/mutate` | previous challenge_id + evaluation_id → new mutated challenge |
-| POST | `/submissions` | challenge_id + code + explanation → runs SQL sandbox + evaluation, returns evaluation |
-| GET | `/readiness/{user_id}/{job_id}` | Backend-computed readiness % + per-skill breakdown |
-| GET | `/evidence/{user_id}` | All evidence rows for the evidence panel, grouped by skill |
+| POST | `/submissions` | full challenge object¹ + code + explanation → runs SQL sandbox + evaluation, returns evaluation |
+| POST | `/readiness/compute`¹ | full job/claims/evidence/submission-history context → backend-computed readiness % + per-skill breakdown |
+| POST | `/evidence/compute`¹ | github evidence + submission history → evidence rows for the evidence panel, grouped by skill |
 | GET | `/challenges/{id}/history` | Walk `parent_challenge_id` chain for the "improvement" timeline |
 
 All POST bodies and responses are Pydantic-validated. Every endpoint wraps AI calls in try/except and falls back per Section W.
+
+¹ No Supabase project is provisioned yet (Section F's schema exists only as a migration file), so there is nothing to look anything up by id. Every endpoint that would otherwise `GET`-by-id instead takes the relevant session state directly in the request body — the frontend already holds it (job, claims, github evidence, the full challenge, and an accumulating `submissionHistory` list) from the screens the candidate already passed through. `/readiness` and `/evidence` were originally specced as `GET /readiness/{user_id}/{job_id}` and `GET /evidence/{user_id}`; they became `POST .../compute` for this reason. When Supabase is wired up, these can revert to real GETs (or stay POST — whichever the team prefers once there's something to query).
 
 ---
 

@@ -4,6 +4,8 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.common import EvidenceSourceType
+from app.schemas.evaluation import SubmissionRecord
+from app.schemas.github import GithubAnalyzeResponse
 
 
 class EvidenceItem(BaseModel):
@@ -22,6 +24,19 @@ class SkillEvidenceGroup(BaseModel):
 
     skill: str
     evidence: list[EvidenceItem]
+
+
+class EvidenceComputeRequest(BaseModel):
+    """No DB persistence yet, so evidence is computed directly from the
+    session state the frontend already holds, rather than looked up by
+    user_id. Deliberately carries no `claims` field — a claim is not
+    evidence (BLUEPRINT.md Section 2), so it can't feed into this endpoint
+    even by accident; claims only ever factor into readiness_engine's
+    claim-alignment bonus, never into what's shown as "evidence"."""
+
+    user_id: UUID
+    github_evidence: GithubAnalyzeResponse | None = None
+    submission_history: list[SubmissionRecord] = []
 
 
 class EvidenceListResponse(BaseModel):

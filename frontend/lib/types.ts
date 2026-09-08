@@ -221,6 +221,15 @@ export interface SubmissionEvaluationResponse {
   demo_fallback: boolean;
 }
 
+/** One completed challenge attempt. No DB persistence yet — the frontend
+ * accumulates these in the session store (see store.ts) and passes the full
+ * history to evidence_engine / readiness_engine, e.g. so a mutated
+ * challenge's improved score is reflected in readiness. */
+export interface SubmissionRecord {
+  challenge: Challenge;
+  evaluation: SubmissionEvaluationResponse;
+}
+
 // ---------------------------------------------------------------------------
 // evidence.py
 // ---------------------------------------------------------------------------
@@ -240,6 +249,15 @@ export interface SkillEvidenceGroup {
   evidence: EvidenceItem[]; // never render a % with an empty list — show "Not yet assessed"
 }
 
+/** No DB persistence yet, so evidence is computed directly from session
+ * state rather than looked up by user_id. Deliberately carries no `claims`
+ * field — a claim is not evidence (Section 2). */
+export interface EvidenceComputeRequest {
+  user_id: string;
+  github_evidence: GithubAnalyzeResponse | null;
+  submission_history: SubmissionRecord[];
+}
+
 export interface EvidenceListResponse {
   user_id: string;
   skills: SkillEvidenceGroup[];
@@ -255,6 +273,19 @@ export interface SkillScoreBreakdown {
   importance_weight: number; // high=3, medium=2, low=1
   score: number; // 0-100
   weighted_contribution: number;
+}
+
+/** No DB persistence yet, so readiness is computed directly from session
+ * state (already held for the job/evidence/challenge screens) rather than
+ * looked up by job_id. */
+export interface ReadinessComputeRequest {
+  user_id: string;
+  job_id: string;
+  job_title: string;
+  required_skills: JobRequiredSkill[];
+  claims: ClaimedSkill[];
+  github_evidence: GithubAnalyzeResponse | null;
+  submission_history: SubmissionRecord[];
 }
 
 export interface ReadinessResponse {
