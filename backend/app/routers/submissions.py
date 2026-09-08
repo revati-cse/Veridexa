@@ -1,53 +1,15 @@
-from uuid import uuid4
-
 from fastapi import APIRouter
 
-from app.schemas import (
-    EvidenceObservation,
-    SkillGapItem,
-    SqlExecutionResult,
-    SubmissionCreate,
-    SubmissionEvaluationResponse,
-)
-from app.schemas.evaluation import DEFAULT_RUBRIC_WEIGHTS
+from app.schemas import SubmissionCreate, SubmissionEvaluationResponse
+from app.services.evaluation_engine import evaluate_submission
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
 
 @router.post("", response_model=SubmissionEvaluationResponse)
 async def create_submission(request: SubmissionCreate) -> SubmissionEvaluationResponse:
-    """STUB: skips the real sql_runner sandbox + evaluation prompt (Phase 8)
-    and returns a fixed, schema-valid evaluation so Screen 6 can be built now.
-
-    overall_score below is pre-computed by hand as
-    Σ(criterion_score × weight) to keep the stub honest about the rule that
-    the LLM never sets the total — evaluation_engine.py will do this same
-    arithmetic in code once it exists.
-    """
-    rubric_scores = {
-        "correctness": 85.0,
-        "technical_logic": 80.0,
-        "reasoning": 70.0,
-        "edge_cases": 55.0,
-        "efficiency": 75.0,
-    }
-    overall_score = round(sum(rubric_scores[k] * DEFAULT_RUBRIC_WEIGHTS[k] for k in DEFAULT_RUBRIC_WEIGHTS), 2)
-
-    return SubmissionEvaluationResponse(
-        submission_id=uuid4(),
-        evaluation_id=uuid4(),
-        rubric_scores=rubric_scores,
-        overall_score=overall_score,
-        strengths=["Correct use of JOIN across customers/orders/payments", "Clear query structure"],
-        weaknesses=["Did not handle NULL customer_id values", "Missed duplicate transaction IDs"],
-        evidence=[
-            EvidenceObservation(skill="SQL", observation="Correct JOIN and GROUP BY usage", confidence=0.85),
-        ],
-        skill_gaps=[
-            SkillGapItem(skill="Statistics", missing_concepts=["Hypothesis testing", "Statistical significance"]),
-        ],
-        sql_execution_result=SqlExecutionResult(
-            success=True, columns=["month", "revenue"], rows=[["2026-01", 48210]], row_count=1,
-        ),
-        demo_fallback=True,
-    )
+    """Calls evaluation_engine.py. The SQL sandbox always runs for real
+    against the submitted challenge's dataset; only the AI reasoning pass
+    falls back to a fixture if Claude is unavailable."""
+    response, _ = await evaluate_submission(request.challenge, request.code, request.explanation)
+    return response

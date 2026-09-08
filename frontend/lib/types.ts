@@ -176,7 +176,9 @@ export interface ChallengeHistoryResponse {
 // ---------------------------------------------------------------------------
 
 export interface SubmissionCreate {
-  challenge_id: string;
+  // No DB persistence yet — the full challenge (already held in the session
+  // store) is sent directly rather than looked up backend-side by id.
+  challenge: Challenge;
   user_id: string;
   code: string;
   explanation: string;

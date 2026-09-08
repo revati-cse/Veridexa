@@ -58,7 +58,7 @@ export default function ChallengePage() {
     setSubmitError(null);
     try {
       const res = await api.submitSolution({
-        challenge_id: challenge.id,
+        challenge,
         user_id: getCandidateId(),
         code,
         explanation,

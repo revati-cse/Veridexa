@@ -37,11 +37,25 @@ class SkillGapItem(BaseModel):
     missing_concepts: list[str] = []
 
 
+class RubricScores(BaseModel):
+    """Exactly the 5 criteria in DEFAULT_RUBRIC_WEIGHTS. A strict model
+    rather than a loose dict, so a missing or misnamed criterion in Claude's
+    output fails Pydantic validation (caught by claude_client's retry-then-
+    fallback) instead of silently contributing 0 to the weighted
+    overall_score — a wrong-key bug here would otherwise be invisible."""
+
+    correctness: float = Field(ge=0, le=100)
+    technical_logic: float = Field(ge=0, le=100)
+    reasoning: float = Field(ge=0, le=100)
+    edge_cases: float = Field(ge=0, le=100)
+    efficiency: float = Field(ge=0, le=100)
+
+
 class EvaluationResult(BaseModel):
     """Raw structured output of the evaluation prompt (Claude), BEFORE backend
-    weighting is applied. `rubric_scores` values are 0-100 per criterion."""
+    weighting is applied."""
 
-    rubric_scores: dict[str, float]
+    rubric_scores: RubricScores
     strengths: list[str] = []
     weaknesses: list[str] = []
     evidence: list[EvidenceObservation] = []

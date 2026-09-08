@@ -1,0 +1,23 @@
+{
+  "rubric_scores": {
+    "correctness": 85,
+    "technical_logic": 80,
+    "reasoning": 70,
+    "edge_cases": 55,
+    "efficiency": 75
+  },
+  "strengths": [
+    "Correct use of JOIN across customers and orders",
+    "Clear, well-structured query"
+  ],
+  "weaknesses": [
+    "Did not handle the order with a missing customer_id",
+    "Did not deduplicate the repeated order record"
+  ],
+  "evidence": [
+    { "skill": "SQL", "observation": "Correct JOIN and GROUP BY usage", "confidence": 0.85 }
+  ],
+  "skill_gaps": [
+    { "skill": "Statistics", "missing_concepts": ["Hypothesis testing", "Statistical significance"] }
+  ]
+}
