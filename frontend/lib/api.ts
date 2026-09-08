@@ -37,8 +37,16 @@ async function request<TResponse>(path: string, init?: RequestInit): Promise<TRe
   }
 
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new ApiError(res.status, body || `Request to ${path} failed with status ${res.status}`);
+    const fallback = `Request to ${path} failed with status ${res.status}`;
+    const bodyText = await res.text().catch(() => "");
+    let message = bodyText || fallback;
+    try {
+      const parsed = JSON.parse(bodyText);
+      if (typeof parsed?.detail === "string") message = parsed.detail;
+    } catch {
+      // body wasn't JSON (or had no .detail) — keep the raw text/fallback above
+    }
+    throw new ApiError(res.status, message);
   }
 
   return (await res.json()) as TResponse;

@@ -60,7 +60,7 @@ export default function EvidencePage() {
         const res = await api.analyzeGithub({
           user_id: userId,
           repository_url: repoUrl.trim(),
-          claimed_skills: claims.map((c) => c.skill),
+          claimed_skills: claims,
           required_skills: [],
         });
         setGithubEvidence(res);

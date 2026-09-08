@@ -89,7 +89,7 @@ export interface JobParseResponse {
 export interface GithubAnalyzeRequest {
   user_id: string;
   repository_url: string;
-  claimed_skills: string[];
+  claimed_skills: ClaimedSkill[]; // levels matter for claims_vs_evidence, not just names
   required_skills: string[];
 }
 
