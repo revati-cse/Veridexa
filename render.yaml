@@ -1,0 +1,30 @@
+# Render Blueprint for the FastAPI backend (BLUEPRINT.md Section C/S/19).
+# Deploy: connect this repo in the Render dashboard as a Blueprint — Render
+# reads this file and provisions the service below. Frontend deploys
+# separately to Vercel (see README.md "Deployment").
+#
+# Env vars marked `sync: false` are secrets — set their real values in the
+# Render dashboard after the first deploy; they are never stored in git.
+services:
+  - type: web
+    name: veridexa-backend
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
