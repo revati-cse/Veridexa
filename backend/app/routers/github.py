@@ -2,8 +2,12 @@ from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException
 
+from app.db import safe_write
+from app.db.evidence import save_evidence_rows
+from app.db.github import save_repository_analysis
 from app.github.client import GithubAccessError
 from app.schemas import GithubAnalyzeRequest, GithubAnalyzeResponse
+from app.services.evidence_engine import build_evidence_rows
 from app.services.github_analyzer import analyze_repository
 
 router = APIRouter(prefix="/github", tags=["github"])
@@ -24,11 +28,24 @@ async def analyze_repository_endpoint(request: GithubAnalyzeRequest) -> GithubAn
     except GithubAccessError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    return GithubAnalyzeResponse(
-        repository_id=uuid4(),
+    repository_id = uuid4()
+    response = GithubAnalyzeResponse(
+        repository_id=repository_id,
         repository=request.repository_url,
         languages_detected=languages_detected,
         skills=skills,
         claims_vs_evidence=claims_vs_evidence,
         demo_fallback=used_fallback,
     )
+
+    await safe_write(
+        save_repository_analysis(
+            repository_id, request.user_id, request.repository_url, languages_detected, skills
+        )
+    )
+    evidence_rows = build_evidence_rows(github_evidence=response, submission_history=[])
+    await safe_write(
+        save_evidence_rows(evidence_rows, request.user_id, repository_id=repository_id)
+    )
+
+    return response

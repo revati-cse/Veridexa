@@ -2,6 +2,8 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
+from app.db import safe_write
+from app.db.challenges import get_challenge_chain, save_challenge
 from app.schemas import (
     ChallengeGenerateRequest,
     ChallengeGenerateResponse,
@@ -25,6 +27,7 @@ async def generate_challenge_endpoint(request: ChallengeGenerateRequest) -> Chal
         required_skills=request.required_skills,
         difficulty=request.difficulty,
     )
+    await safe_write(save_challenge(challenge, request.user_id))
     return ChallengeGenerateResponse(challenge=challenge, demo_fallback=used_fallback)
 
 
@@ -39,10 +42,19 @@ async def mutate_challenge_endpoint(request: ChallengeMutateRequest) -> Challeng
         required_skills=request.required_skills,
         previous_attempt=request.previous_attempt,
     )
+    # The previous attempt's challenge may not have been persisted yet (e.g.
+    # DB was down when it was generated) — save it too so parent_challenge_id
+    # resolves for the history walk.
+    await safe_write(save_challenge(request.previous_attempt.challenge, request.user_id))
+    await safe_write(save_challenge(challenge, request.user_id))
     return ChallengeMutateResponse(challenge=challenge, demo_fallback=used_fallback)
 
 
 @router.get("/{challenge_id}/history", response_model=ChallengeHistoryResponse)
 async def get_challenge_history(challenge_id: UUID) -> ChallengeHistoryResponse:
-    """STUB: real implementation walks parent_challenge_id back to the root."""
-    return ChallengeHistoryResponse(chain=[])
+    """Walks parent_challenge_id back to the root via the DB. Returns an
+    empty chain (not an error) when no database is configured or the
+    challenge was never persisted — this view is a nice-to-have, not a
+    critical path."""
+    chain = await get_challenge_chain(challenge_id)
+    return ChallengeHistoryResponse(chain=chain)

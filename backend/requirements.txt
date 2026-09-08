@@ -4,6 +4,7 @@ pydantic>=2
 pydantic-settings
 httpx
 anthropic
+asyncpg
 supabase
 python-dotenv
 pytest
