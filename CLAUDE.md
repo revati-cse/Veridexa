@@ -229,6 +229,32 @@ committed) — to redo it, restart the backend mid-script with
 `ANTHROPIC_API_KEY`, and confirm `demo_fallback: true` shows up on the
 mutate/submit responses rather than a 500.
 
+## Pitch deck
+
+`docs/veridexa_pitch.pptx` (checklist item 36) — 13 slides built with
+`pptxgenjs`, not a mockup: every product screenshot in it is a real
+Playwright capture against a live backend + frontend + Postgres, cropped
+to content bounds with Pillow. The recruiter-dashboard/comparison
+screenshot needed two seeded candidates on the same job to actually show a
+comparison, not a single row. Positioning language is pulled from
+BLUEPRINT.md Section A/B and `docs/demo_script.md`'s pitch/closing lines —
+there's no "Section 27–29" in this document (that checklist item referenced
+stale numbering from the original draft spec, now corrected in the
+checklist entry itself).
+
+To rebuild it: recapture screenshots via Playwright (see this session's
+approach — `next/dynamic` Monaco needs `.monaco-editor .view-lines` click
++ `keyboard.type`, and client-side `<Link>` navigation, not `page.goto`,
+between screens or the Zustand session store resets), regenerate with a
+pptxgenjs script, then run this skill's own QA loop: `validate.py`,
+convert to PDF via `soffice.py`, `pdftoppm`, and actually look at every
+slide — the first render had two real defects (a 7-column step row
+bleeding text into itself, and screenshot images overlapping their own
+2-line captions) that only visual QA caught, not the schema validator.
+This sandbox needed `libreoffice-impress`, `libreoffice-draw`, and
+`poppler-utils` installed (`apt-get install`) before conversion worked at
+all — `libreoffice-core` alone has no presentation import filter.
+
 ## What's not built yet / deliberately out of scope
 
 Auth is P3 per BLUEPRINT.md Section B — don't add it unless explicitly

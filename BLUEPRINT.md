@@ -731,7 +731,7 @@ Each item is independently completable and testable.
 33. [ ] Security pass on `github_analyzer.py` (prompt-injection delimiters, PAT scope) and `sql_runner.py` (denylist, timeout, isolation).
 34. [ ] Deploy backend (Render/Railway) and frontend (Vercel); verify CORS and env vars in production.
 35. [x] Full rehearsal of `docs/demo_script.md` twice; kill network once mid-rehearsal to confirm fallback path is seamless.
-36. [ ] Prepare PPT following Section 27–29 positioning language, using the actual dashboard screenshots from the rehearsal run.
+36. [x] Prepare PPT (`docs/veridexa_pitch.pptx`) using positioning language from Section A/B and `docs/demo_script.md`'s pitch/closing lines, and real dashboard screenshots captured live via Playwright (not mockups) — no "Section 27–29" exists in this document; that was a stale reference to the original draft's numbering.
 
 ---
 
