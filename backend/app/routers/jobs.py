@@ -2,29 +2,17 @@ from uuid import uuid4
 
 from fastapi import APIRouter
 
-from app.schemas import JobParseRequest, JobParseResponse, JobRequiredSkill, ParsedJob
+from app.schemas import JobParseRequest, JobParseResponse
+from app.services.job_parser import parse_job
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
 @router.post("/parse", response_model=JobParseResponse)
-async def parse_job(request: JobParseRequest) -> JobParseResponse:
-    """STUB: returns a fixed structured job until job_parser.py (Phase 3) is wired in.
-
-    Proves the request/response contract end-to-end so the frontend can build
-    Screens 2/3 against a stable shape before the Claude call exists.
-    """
-    stub_job = ParsedJob(
-        title="Data Analyst",
-        required_skills=[
-            JobRequiredSkill(skill="SQL", importance="high"),
-            JobRequiredSkill(skill="Python", importance="high"),
-            JobRequiredSkill(skill="Statistics", importance="medium"),
-            JobRequiredSkill(skill="Power BI", importance="medium"),
-            JobRequiredSkill(skill="Problem Solving", importance="high"),
-        ],
-        soft_skills=["Communication", "Attention to detail"],
-        tools=["Excel", "Power BI"],
-        experience_years=1,
-    )
-    return JobParseResponse(job_id=uuid4(), job=stub_job, demo_fallback=True)
+async def parse_job_endpoint(request: JobParseRequest) -> JobParseResponse:
+    """Calls job_parser.py (Claude, structured output). Falls back to the
+    demo fixture automatically if Claude is unavailable — demo_fallback on
+    the response says which happened. job_id is a fresh uuid for now; DB
+    persistence lands once a Supabase project is provisioned."""
+    job, used_fallback = await parse_job(request.raw_description)
+    return JobParseResponse(job_id=uuid4(), job=job, demo_fallback=used_fallback)

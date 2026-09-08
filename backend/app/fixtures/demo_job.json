@@ -1,0 +1,13 @@
+{
+  "title": "Data Analyst",
+  "required_skills": [
+    { "skill": "SQL", "importance": "high", "required": true },
+    { "skill": "Python", "importance": "high", "required": true },
+    { "skill": "Statistics", "importance": "medium", "required": true },
+    { "skill": "Power BI", "importance": "medium", "required": true },
+    { "skill": "Problem Solving", "importance": "high", "required": true }
+  ],
+  "soft_skills": ["Communication", "Attention to detail"],
+  "tools": ["Excel", "Power BI"],
+  "experience_years": 1
+}
