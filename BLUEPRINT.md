@@ -730,7 +730,7 @@ Each item is independently completable and testable.
 32. [ ] Add loading/error/empty states to all 7 frontend routes.
 33. [ ] Security pass on `github_analyzer.py` (prompt-injection delimiters, PAT scope) and `sql_runner.py` (denylist, timeout, isolation).
 34. [ ] Deploy backend (Render/Railway) and frontend (Vercel); verify CORS and env vars in production.
-35. [ ] Full rehearsal of `docs/demo_script.md` twice; kill network once mid-rehearsal to confirm fallback path is seamless.
+35. [x] Full rehearsal of `docs/demo_script.md` twice; kill network once mid-rehearsal to confirm fallback path is seamless.
 36. [ ] Prepare PPT following Section 27–29 positioning language, using the actual dashboard screenshots from the rehearsal run.
 
 ---
