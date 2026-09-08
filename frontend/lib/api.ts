@@ -6,6 +6,8 @@ import type {
   ClaimsRequest,
   EvidenceComputeRequest,
   EvidenceListResponse,
+  FreshnessComputeRequest,
+  FreshnessResponse,
   GithubAnalyzeRequest,
   GithubAnalyzeResponse,
   JobParseRequest,
@@ -83,4 +85,8 @@ export const api = {
 
   computeEvidence: (body: EvidenceComputeRequest) =>
     request<EvidenceListResponse>("/evidence/compute", { method: "POST", body: JSON.stringify(body) }),
+
+  // P2/optional (see freshness_engine.py) — not called from any screen yet.
+  computeFreshness: (body: FreshnessComputeRequest) =>
+    request<FreshnessResponse>("/freshness/compute", { method: "POST", body: JSON.stringify(body) }),
 };

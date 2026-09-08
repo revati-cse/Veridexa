@@ -41,8 +41,12 @@ cd backend && python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload          # http://localhost:8000, /health
 
-# backend tests (108+ tests, no live network needed — Claude/GitHub calls are mocked)
+# backend tests (125+ tests, no live network needed — Claude/GitHub calls are mocked)
 cd backend && source venv/bin/activate && python -m pytest -q
+
+# end-to-end smoke test against a *running* backend (see docs/demo_script.md)
+uvicorn app.main:app &
+python scripts/smoke_test.py
 
 # frontend
 cd frontend && npm install && npm run dev   # http://localhost:3000
@@ -120,9 +124,20 @@ for new async tests.
   range) — bump it via the root `overrides` field in `frontend/package.json`,
   not `npm audit fix`.
 
+## Freshness (P2, backend-only)
+
+`freshness_engine.py` / `POST /freshness/compute` flags whether the
+evidence behind each skill is recent or stale (`fresh`/`aging`/`stale`/
+`not_assessed`), based on `GithubAnalyzeResponse.analyzed_at` and
+`SubmissionEvaluationResponse.evaluated_at`. It is **informational only** —
+deliberately not blended into `readiness_engine`'s score, so the numbers
+verified in `docs/demo_script.md` stay reproducible. No frontend screen
+calls it yet (`api.computeFreshness` exists in `lib/api.ts` but is unused) —
+add one only if asked; it wasn't part of the original 7-screen flow
+(Section Q).
+
 ## What's not built yet / deliberately out of scope
 
-Auth, freshness scoring, recruiter dashboard, candidate comparison, and
-timeline views are P2/P3 per BLUEPRINT.md Section B — don't add them
-unless explicitly asked. This is a 2-developer, 36-hour hackathon scope;
-resist gold-plating.
+Auth, recruiter dashboard, candidate comparison, and timeline views are
+P2/P3 per BLUEPRINT.md Section B — don't add them unless explicitly asked.
+This is a 2-developer, 36-hour hackathon scope; resist gold-plating.

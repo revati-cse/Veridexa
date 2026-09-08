@@ -11,6 +11,7 @@ from app.routers import (
     challenges,
     evaluations,
     evidence,
+    freshness,
     github,
     jobs,
     readiness,
@@ -51,6 +52,7 @@ app.include_router(submissions.router)
 app.include_router(evaluations.router)
 app.include_router(readiness.router)
 app.include_router(evidence.router)
+app.include_router(freshness.router)
 
 
 @app.get("/health")

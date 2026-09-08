@@ -119,6 +119,9 @@ export interface GithubAnalyzeResponse {
   skills: SkillEvidenceItem[];
   claims_vs_evidence: ClaimVsEvidenceItem[];
   demo_fallback: boolean;
+  // Set server-side (ISO 8601). freshness_engine.py's only signal for this
+  // source — round-trips unchanged once passed back into a later request.
+  analyzed_at: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +227,9 @@ export interface SubmissionEvaluationResponse {
   skill_gaps: SkillGapItem[];
   sql_execution_result: SqlExecutionResult | null;
   demo_fallback: boolean;
+  // Set server-side (ISO 8601). freshness_engine.py's only signal for this
+  // source — round-trips unchanged once passed back into a later request.
+  evaluated_at: string;
 }
 
 /** One completed challenge attempt. No DB persistence yet — the frontend
@@ -302,4 +308,32 @@ export interface ReadinessResponse {
   strengths: string[];
   weaknesses: string[];
   skill_gaps: SkillGapItem[];
+}
+
+// ---------------------------------------------------------------------------
+// freshness.py (P2/optional — see freshness_engine.py)
+// ---------------------------------------------------------------------------
+
+export type FreshnessLabel = "fresh" | "aging" | "stale" | "not_assessed";
+
+/** Informational only — does NOT feed into ReadinessResponse.skill_breakdown
+ * scores. "How confident are we" (readiness) and "how current is that
+ * confidence" (this) are deliberately separate questions. */
+export interface SkillFreshnessItem {
+  skill: string;
+  last_evidence_at: string | null; // ISO 8601
+  days_since_last_evidence: number | null;
+  freshness: FreshnessLabel;
+}
+
+export interface FreshnessComputeRequest {
+  user_id: string;
+  required_skills: JobRequiredSkill[];
+  github_evidence: GithubAnalyzeResponse | null;
+  submission_history: SubmissionRecord[];
+}
+
+export interface FreshnessResponse {
+  user_id: string;
+  skills: SkillFreshnessItem[];
 }

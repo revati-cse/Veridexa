@@ -115,7 +115,7 @@ backend/
       readiness_engine.py
       skill_gap_engine.py
       challenge_mutation_engine.py
-      freshness_engine.py    # optional, stub until Phase 15
+      freshness_engine.py    # optional (P2) — implemented; informational only, does not affect readiness_score
     ai/
       claude_client.py       # single wrapper: call(), retry, JSON-mode parsing
       prompts/

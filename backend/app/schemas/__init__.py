@@ -15,6 +15,7 @@ from app.schemas.evaluation import (
     SubmissionRecord,
 )
 from app.schemas.evidence import EvidenceComputeRequest, EvidenceItem, EvidenceListResponse, SkillEvidenceGroup
+from app.schemas.freshness import FreshnessComputeRequest, FreshnessResponse, SkillFreshnessItem
 from app.schemas.github import (
     ClaimVsEvidenceItem,
     GithubAnalyzeRequest,
@@ -44,6 +45,9 @@ __all__ = [
     "EvidenceItem",
     "EvidenceListResponse",
     "SkillEvidenceGroup",
+    "FreshnessComputeRequest",
+    "FreshnessResponse",
+    "SkillFreshnessItem",
     "ClaimVsEvidenceItem",
     "GithubAnalyzeRequest",
     "GithubAnalyzeResponse",

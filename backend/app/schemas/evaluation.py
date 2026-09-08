@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -78,6 +79,11 @@ class SubmissionEvaluationResponse(BaseModel):
     skill_gaps: list[SkillGapItem]
     sql_execution_result: SqlExecutionResult | None = None
     demo_fallback: bool = False
+    # Set server-side when this response is built (never client-supplied) —
+    # freshness_engine.py's only signal for "how current is this evidence".
+    # Round-trips unchanged once the frontend passes this response back into
+    # a later request (e.g. nested in a SubmissionRecord).
+    evaluated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class SubmissionRecord(BaseModel):

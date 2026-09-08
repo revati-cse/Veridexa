@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -50,3 +51,8 @@ class GithubAnalyzeResponse(BaseModel):
     skills: list[SkillEvidenceItem]
     claims_vs_evidence: list[ClaimVsEvidenceItem]
     demo_fallback: bool = False
+    # Set server-side when this response is built (never client-supplied) —
+    # freshness_engine.py's only signal for "how current is this evidence".
+    # Round-trips unchanged once the frontend passes this response back into
+    # a later request (e.g. as `github_evidence` on /readiness/compute).
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
