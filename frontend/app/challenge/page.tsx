@@ -39,6 +39,7 @@ export default function ChallengePage() {
     try {
       const res = await api.generateChallenge({
         job_id: jobId,
+        job_title: job.title,
         user_id: getCandidateId(),
         required_skills: job.required_skills.map((rs) => rs.skill),
         difficulty: 1,

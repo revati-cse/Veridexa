@@ -2,6 +2,17 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+# Default SQL/data-challenge rubric (BLUEPRINT.md Section K). Backend-assigned
+# and shared by challenge_generator.py and evaluation_engine.py — the LLM is
+# never asked to invent rubric weights, so they're guaranteed to sum to 1.0.
+DEFAULT_RUBRIC_WEIGHTS: dict[str, float] = {
+    "correctness": 0.30,
+    "technical_logic": 0.25,
+    "reasoning": 0.20,
+    "edge_cases": 0.15,
+    "efficiency": 0.10,
+}
+
 
 class SqlExecutionResult(BaseModel):
     """Ground truth produced by sandbox/sql_runner.py, fed into the evaluation

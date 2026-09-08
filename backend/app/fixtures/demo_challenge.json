@@ -1,0 +1,32 @@
+{
+  "title": "Investigate the Revenue Discrepancy",
+  "role": "Junior Data Analyst",
+  "scenario": "The finance team reports that this month's revenue looks inflated compared to the sales forecast. You are given the customers and orders tables. Before finance presents these numbers, they need to know whether the increase is real.",
+  "instructions": "Write a single SQL query that returns each customer's corrected total revenue, accounting for any duplicate order records and any orders with a missing customer_id.",
+  "required_skills": ["SQL", "Problem Solving"],
+  "dataset": {
+    "tables": [
+      {
+        "name": "customers",
+        "columns": ["id", "name"],
+        "rows": [
+          [1, "Alice"],
+          [2, "Bob"],
+          [3, "Carol"]
+        ]
+      },
+      {
+        "name": "orders",
+        "columns": ["id", "customer_id", "amount"],
+        "rows": [
+          [1, 1, 100],
+          [2, 1, 100],
+          [3, 2, 250],
+          [4, null, 75],
+          [5, 3, 60]
+        ]
+      }
+    ]
+  },
+  "expected_output": "A result set of customer name and corrected revenue total, with duplicate order records counted once and orders lacking a customer_id excluded or explicitly flagged."
+}

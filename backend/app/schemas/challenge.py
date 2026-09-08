@@ -4,13 +4,33 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from app.schemas.common import Difficulty
+from app.schemas.sandbox import SandboxDataset
 
 
 class ChallengeGenerateRequest(BaseModel):
     job_id: UUID
+    # No DB persistence yet, so the frontend passes the title it already has
+    # in its session store rather than the backend looking it up by job_id.
+    job_title: str
     user_id: UUID
     required_skills: list[str]
     difficulty: Difficulty = 1
+
+
+class ChallengeAIOutput(BaseModel):
+    """What Claude actually returns from challenge_generation_prompt.py.
+    `difficulty` and `evaluation_criteria` are deliberately absent — both are
+    backend-assigned (Section K/3), never LLM-authored. `dataset` reuses the
+    sql_runner sandbox's own schema, so a generated challenge is guaranteed
+    to be runnable by construction rather than merely schema-shaped."""
+
+    title: str
+    role: str
+    scenario: str
+    instructions: str
+    required_skills: list[str]
+    dataset: SandboxDataset
+    expected_output: str
 
 
 class Challenge(BaseModel):

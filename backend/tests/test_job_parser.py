@@ -70,3 +70,28 @@ def test_parse_job_falls_back_to_fixture_when_claude_unavailable():
     assert used_fallback is True
     assert job.title == "Data Analyst"
     assert any(skill.skill == "SQL" for skill in job.required_skills)
+
+
+def test_parse_job_normalizes_and_merges_aliased_skills_from_claude():
+    # If Claude returns "MySQL" and "PostgreSQL" as separate skills, the
+    # normalization wiring in parse_job() must merge them into one "SQL"
+    # entry — this is what actually exercises skill_engine.py, not just a
+    # unit test of normalize_required_skills() in isolation.
+    raw_from_claude = ParsedJob(
+        title="Data Engineer",
+        required_skills=[
+            JobRequiredSkill(skill="MySQL", importance="medium"),
+            JobRequiredSkill(skill="PostgreSQL", importance="high"),
+            JobRequiredSkill(skill="python scripting", importance="high"),
+        ],
+        soft_skills=[],
+        tools=[],
+        experience_years=None,
+    )
+
+    with patch("app.services.job_parser.call_structured", new=AsyncMock(return_value=raw_from_claude)):
+        job, used_fallback = asyncio.run(parse_job("any description"))
+
+    assert used_fallback is False
+    assert [s.skill for s in job.required_skills] == ["SQL", "Python"]
+    assert next(s for s in job.required_skills if s.skill == "SQL").importance == "high"

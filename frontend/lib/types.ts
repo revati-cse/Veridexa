@@ -127,6 +127,9 @@ export interface GithubAnalyzeResponse {
 
 export interface ChallengeGenerateRequest {
   job_id: string;
+  // No DB persistence yet — passed from the session store rather than
+  // looked up backend-side by job_id.
+  job_title: string;
   user_id: string;
   required_skills: string[];
   difficulty: Difficulty;

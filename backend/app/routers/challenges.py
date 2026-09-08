@@ -10,43 +10,23 @@ from app.schemas import (
     ChallengeMutateRequest,
     ChallengeMutateResponse,
 )
+from app.schemas.evaluation import DEFAULT_RUBRIC_WEIGHTS
+from app.services.challenge_generator import generate_challenge
 
 router = APIRouter(prefix="/challenges", tags=["challenges"])
 
-_RUBRIC_WEIGHTS = {
-    "correctness": 0.3,
-    "technical_logic": 0.25,
-    "reasoning": 0.2,
-    "edge_cases": 0.15,
-    "efficiency": 0.1,
-}
-
-
-def _stub_challenge(request: ChallengeGenerateRequest) -> Challenge:
-    return Challenge(
-        id=uuid4(),
-        job_id=request.job_id,
-        parent_challenge_id=None,
-        title="Investigate the Revenue Discrepancy",
-        role="Junior Data Analyst",
-        scenario=(
-            "The finance team reports that monthly revenue looks inflated. "
-            "You are given customer, order, and payment tables."
-        ),
-        instructions="Write a SQL query that identifies the source of the discrepancy.",
-        required_skills=request.required_skills or ["SQL"],
-        difficulty=request.difficulty,
-        dataset={"tables": ["customers", "orders", "payments"], "seed": "stub"},
-        expected_output="A corrected revenue figure with the root cause explained.",
-        evaluation_criteria=_RUBRIC_WEIGHTS,
-        mutation_reason=None,
-    )
-
 
 @router.post("/generate", response_model=ChallengeGenerateResponse)
-async def generate_challenge(request: ChallengeGenerateRequest) -> ChallengeGenerateResponse:
-    """STUB: returns a fixed scenario until challenge_generator.py (Phase 9) is wired in."""
-    return ChallengeGenerateResponse(challenge=_stub_challenge(request), demo_fallback=True)
+async def generate_challenge_endpoint(request: ChallengeGenerateRequest) -> ChallengeGenerateResponse:
+    """Calls challenge_generator.py (Claude, structured output). Falls back
+    to the demo fixture automatically if Claude is unavailable."""
+    challenge, used_fallback = await generate_challenge(
+        job_id=request.job_id,
+        job_title=request.job_title,
+        required_skills=request.required_skills,
+        difficulty=request.difficulty,
+    )
+    return ChallengeGenerateResponse(challenge=challenge, demo_fallback=used_fallback)
 
 
 @router.post("/mutate", response_model=ChallengeMutateResponse)
@@ -69,7 +49,7 @@ async def mutate_challenge(request: ChallengeMutateRequest) -> ChallengeMutateRe
         difficulty=2,
         dataset={"tables": ["customers", "orders", "payments"], "seed": "stub_mutated"},
         expected_output="A deduplicated, NULL-safe revenue figure.",
-        evaluation_criteria=_RUBRIC_WEIGHTS,
+        evaluation_criteria=DEFAULT_RUBRIC_WEIGHTS,
         mutation_reason=(
             "Targeted because your previous submission missed NULL customer_id "
             "handling and did not deduplicate transaction IDs."

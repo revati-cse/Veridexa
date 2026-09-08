@@ -9,6 +9,7 @@ from app.schemas import (
     SubmissionCreate,
     SubmissionEvaluationResponse,
 )
+from app.schemas.evaluation import DEFAULT_RUBRIC_WEIGHTS
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -30,11 +31,7 @@ async def create_submission(request: SubmissionCreate) -> SubmissionEvaluationRe
         "edge_cases": 55.0,
         "efficiency": 75.0,
     }
-    weights = {
-        "correctness": 0.3, "technical_logic": 0.25, "reasoning": 0.2,
-        "edge_cases": 0.15, "efficiency": 0.1,
-    }
-    overall_score = round(sum(rubric_scores[k] * weights[k] for k in weights), 2)
+    overall_score = round(sum(rubric_scores[k] * DEFAULT_RUBRIC_WEIGHTS[k] for k in DEFAULT_RUBRIC_WEIGHTS), 2)
 
     return SubmissionEvaluationResponse(
         submission_id=uuid4(),
