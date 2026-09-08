@@ -4,6 +4,20 @@ Evidence-Based Skill Verification and Personalized Job Readiness Platform
 
 See [`BLUEPRINT.md`](./BLUEPRINT.md) for the full technical design.
 
+## Project status
+
+Built for the IIC 3.0 hackathon at Manipal University Jaipur — the full
+9-engine backend, all 7 candidate screens plus a recruiter dashboard, and
+DB persistence are implemented and tested (140+ backend tests). 37 of
+[BLUEPRINT.md's 38 checklist items](./BLUEPRINT.md#numbered-implementation-checklist)
+are checked off. The one open item is **live deployment** (item 34):
+the deployment config itself — `render.yaml`, `backend/Procfile`,
+`.env.example`, CORS wiring — is written and verified (see CLAUDE.md's
+"Deployment config verification"), but actually deploying to Render/
+Railway/Vercel/Supabase needs real account credentials, so no live URL
+exists yet. Follow "Deployment" below whenever those credentials are
+available.
+
 ## Local development
 
 **Backend** (FastAPI, Python 3.11):
