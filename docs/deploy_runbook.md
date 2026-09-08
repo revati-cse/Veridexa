@@ -4,9 +4,22 @@ Closes BLUEPRINT.md checklist item 34. All the config referenced below
 (`render.yaml`, `backend/Procfile`, `.env.example`, CORS wiring in
 `backend/app/config.py`) has already been verified locally to behave
 correctly — see CLAUDE.md's "Deployment config verification" section. This
-runbook is what's left: the actual account setup and click-through, which
-needs real Render/Vercel/Supabase credentials no prior session has had.
+runbook is what's left: the actual account setup and click-through.
 Follow it in order — each step's dependencies come before it.
+
+**This needs to run somewhere that can actually reach Render, Vercel, and
+Supabase.** Every session that has attempted this so far ran in a
+sandboxed environment with two independent blockers, not one: no
+Render/Vercel/Supabase credentials were ever available *and*, separately,
+that environment's own outbound network policy (chosen when the
+environment was created) was a default-deny allowlist that didn't include
+`render.com`, `vercel.com`, or `supabase.com` at all — confirmed directly,
+a `curl` to each returned a `403` straight from the egress proxy
+(`"gateway answered 403 to CONNECT (policy denial)"`), not a timeout or an
+auth failure. So even supplying real credentials there wouldn't have been
+enough on its own. Run this from a laptop, a CI runner, or a Claude Code
+environment whose network policy actually allows reaching those three
+hosts — check that before assuming credentials alone will unblock this.
 
 ## Prerequisites
 

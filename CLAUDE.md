@@ -200,10 +200,17 @@ original_casing` in `tests/test_timeline_engine.py`).
 
 ## Deployment config verification (item 34)
 
-Actually deploying to live Render/Railway/Vercel/Supabase accounts needs
-credentials this environment doesn't have — that part of BLUEPRINT.md
-checklist item 34 stays undone. What *is* verified, in this environment,
-against the real config files rather than by inspection alone:
+Actually deploying to live Render/Railway/Vercel/Supabase accounts stays
+undone here — and it's two independent blockers, not one. No credentials
+for those services have ever been available in this environment, and
+separately, this sandbox's own outbound network policy returns a `403`
+on any connection attempt to `render.com`, `vercel.com`, or
+`supabase.com` (confirmed directly with `curl` — a policy denial from the
+egress proxy itself, not a timeout or an auth failure). Credentials alone
+wouldn't be enough to unblock item 34 from here; see
+`docs/deploy_runbook.md`'s own note on this. What *is* verified, in this
+environment, against the real config files rather than by inspection
+alone:
 
 - **No drift across the four sources of truth.** `.env.example`,
   `render.yaml`'s `envVars`, and `Settings` in `backend/app/config.py`
