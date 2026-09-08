@@ -25,7 +25,7 @@ deviate from it, update it — don't let it silently drift out of date.
 ```
 backend/    FastAPI (Python 3.11) — app/{routers,services,schemas,db,ai,github,sandbox,fixtures}/
 frontend/   Next.js 16 (App Router) + React 18 + TypeScript + Tailwind, Zustand for session state
-supabase/migrations/   Postgres schema (001_init.sql) + skill taxonomy seed (002_seed_skills.sql)
+supabase/migrations/   Postgres schema (001_init.sql) + skill taxonomy seed (002_seed_skills.sql) + candidate claims (003_candidate_claims.sql)
 docs/       demo_script.md and similar reference docs
 ```
 
